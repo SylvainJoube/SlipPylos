@@ -13,7 +13,7 @@ import commun.partie.nonGraphique.PylosPoint;
 import commun.partie.nonGraphique.TeamType;
 
 public class Listeners {
-
+	
 }
 
 class CustomPoint extends Point {
@@ -39,12 +39,12 @@ class MouseIsAbovePionSelection {
 }
 
 class MyMouseListener implements MouseListener {
-
+	
 	@Override public void mouseExited(MouseEvent event) {
 		//LogWriter.Log("MyMouseListener.mouseExited :  event.getX = " + event.getX() + "event.getY = " + event.getY());
 	}
 	@Override public void mousePressed(MouseEvent event) {
-		LogWriter.Log("MyMouseListener.mousePressed :  event.getX = " + event.getX() + "event.getY = " + event.getY());
+		//LogWriter.Log("MyMouseListener.mousePressed :  event.getX = " + event.getX() + "event.getY = " + event.getY());
 		// 
 		GameHandler.jeuActuel.lastMouseX = event.getX();
 		GameHandler.jeuActuel.lastMouseY = event.getY();
@@ -85,9 +85,9 @@ class MyMouseListener implements MouseListener {
 		
 		GameHandler.jeuActuel.lastMouseX = event.getX();
 		GameHandler.jeuActuel.lastMouseY = event.getY();
-		
+
 		GameHandler.jeuActuel.refreshWithMousePosition();
-		
+		// met à jour GameHandler.jeuActuel.poserUnPionIci
 		
 		if (GameHandler.jeuActuel.volonteJoueur == VolonteJoueur.PION_EN_MAIN
 			|| GameHandler.jeuActuel.volonteJoueur == VolonteJoueur.DEPLACER_UN_PION) {
@@ -98,17 +98,20 @@ class MyMouseListener implements MouseListener {
 			if (GameHandler.jeuActuel.volonteJoueur == VolonteJoueur.DEPLACER_UN_PION)
 				hateurMinimale = GameHandler.jeuActuel.dragCell.hauteur + 1;
 			
-			PylosCellResult cellUnderMouse = CellDetection.getCellUnderMouse(mousePos, gridPos, GameHandler.partieActuelle, TeamType.AUCUNE, hateurMinimale);
+			
+			PylosCellResult peutPoserPionIci = GameHandler.jeuActuel.poserUnPionIci;
+			
+			//PylosCellResult cellUnderMouse = CellDetection.getCellUnderMouse(mousePos, gridPos, GameHandler.partieActuelle, TeamType.AUCUNE, hateurMinimale);
 			TeamType equipeJoueur = GameHandler.partieActuelle.equipeJoueur;
 			
-			boolean peutPoserSonPion = true;
-			
+			//boolean peutPoserSonPion = true;
+			/*
 			if (cellUnderMouse == null)
 				peutPoserSonPion = false;
 			else {
 				if (cellUnderMouse.occupeePar != TeamType.AUCUNE) peutPoserSonPion = false;
 				if (! cellUnderMouse.peutPoserIci)  peutPoserSonPion = false;
-			}
+			}*/
 			
 			// Si je peux poser mon pion et qu'il s'agit d'un déplacement de pion, je vérifie que l'ancienne position du pion est inférieure à sa nouvelle
 			/* déjà vérifié, et mis dans cellUnderMouse.peutPoserIci
@@ -120,17 +123,17 @@ class MyMouseListener implements MouseListener {
 			}*/
 			
 			// Le joueur ne peut poser un pion que s'il n'a pas utilisé sa réserve
-			if ((GameHandler.jeuActuel.volonteJoueur == VolonteJoueur.PION_EN_MAIN)
+			/*if ((GameHandler.jeuActuel.volonteJoueur == VolonteJoueur.PION_EN_MAIN)
 					&& GameHandler.partieActuelle.joueurAJoueUnPion) {
 				peutPoserSonPion = false;
-			}
+			}*/
 			//peutPoserSonPion = 
 			
 			
-			
-			if (peutPoserSonPion) { // poser un pion ici
+			if (peutPoserPionIci != null)
+			if (peutPoserPionIci.peutPoserIci) { // poser un pion ici
 				
-				GameHandler.partieActuelle.setCell(cellUnderMouse.hauteur, cellUnderMouse.xCell, cellUnderMouse.yCell, equipeJoueur);
+				GameHandler.partieActuelle.setCell(peutPoserPionIci.hauteur, peutPoserPionIci.xCell, peutPoserPionIci.yCell, equipeJoueur);
 				GameHandler.partieActuelle.joueurAJoueUnPion = true;
 				
 				if (GameHandler.jeuActuel.volonteJoueur != VolonteJoueur.DEPLACER_UN_PION) {
@@ -140,22 +143,41 @@ class MyMouseListener implements MouseListener {
 					// Je supprime l'ancien pion
 					PylosCell dragCell = GameHandler.jeuActuel.dragCell;
 					GameHandler.partieActuelle.setCell(dragCell.hauteur, dragCell.xCell, dragCell.yCell, TeamType.AUCUNE);
-					
 				}
 				
-				if (GameHandler.partieActuelle.plateauActuel.willFormSameColorRectangle(cellUnderMouse.hauteur, cellUnderMouse.xCell, cellUnderMouse.yCell, equipeJoueur)) {
+				if (GameHandler.partieActuelle.plateauActuel.willFormSameColorRectangle(peutPoserPionIci.hauteur, peutPoserPionIci.xCell, peutPoserPionIci.yCell, equipeJoueur)) {
+					GameHandler.partieActuelle.peutReprendrePionsNb = 2;
+					
+					/*
 					if ((equipeJoueur == TeamType.BLANC) && (GameHandler.partieActuelle.nbJetonsNoir > 0)) {
+						
 						GameHandler.partieActuelle.nbJetonsBlanc++;
 						GameHandler.partieActuelle.nbJetonsNoir--;
 					}
 					if ((equipeJoueur == TeamType.NOIR) && (GameHandler.partieActuelle.nbJetonsBlanc > 0)) {
 						GameHandler.partieActuelle.nbJetonsBlanc--;
 						GameHandler.partieActuelle.nbJetonsNoir++;
-					}
+					}*/
+					
 				}
 				//GameHandler.partieActuelle.tourSuivant();
 			}
 		}
+		
+		if (GameHandler.jeuActuel.volonteJoueur == VolonteJoueur.REPRENDRE_UN_PION) {
+			if (GameHandler.jeuActuel.pickUpCell != null) { // actualisé juste au-dessus via : GameHandler.jeuActuel.refreshWithMousePosition();
+				// Reprendre ce pion
+				PylosCell pickUpCell = GameHandler.jeuActuel.pickUpCell;
+				GameHandler.partieActuelle.setCell(pickUpCell.hauteur, pickUpCell.xCell, pickUpCell.yCell, TeamType.AUCUNE);
+				TeamType equipeJoueur = GameHandler.partieActuelle.equipeJoueur;
+				if (equipeJoueur == TeamType.BLANC) GameHandler.partieActuelle.nbJetonsBlanc++;
+				if (equipeJoueur == TeamType.NOIR)  GameHandler.partieActuelle.nbJetonsNoir++;
+				
+				GameHandler.partieActuelle.peutReprendrePionsNb--;
+				GameHandler.jeuActuel.refreshWithMousePosition(); // actualisation fonctionnelle et graphique
+			}
+		}
+		
 		
 		//if (!volonteJoueurPionEnMain) {
 		//	GameHandler.jeuActuel.volonteJoueur = VolonteJoueur.MAIN_LIBRE;
@@ -163,14 +185,25 @@ class MyMouseListener implements MouseListener {
 		GameHandler.jeuActuel.volonteJoueur = VolonteJoueur.MAIN_LIBRE;
 		PylosPartie partie = GameHandler.jeuActuel.partieActuelle;
 		if (GameHandler.tourSuivantPos.isInside(event.getX(), event.getY())) {
+			boolean peutChangerDeTour = true;
 			if (!partie.joueurAJoueUnPion) {
 				LogWriter.Log("MyMouseListener.mousePressed : Impossible de passer votre tour lorsque vous n'avez pas encore joué !");
-			} else if (partie.tourDe == partie.equipeJoueur) {
+				peutChangerDeTour = false;
+			}
+			
+			if (GameHandler.partieActuelle.peutReprendrePionsNb > 1) {
+				LogWriter.Log("MyMouseListener.mousePressed : Impossible de passer votre tour lorsque vous n'avez repris au moins un des pions qui vons sont dûs !");
+				peutChangerDeTour = false;
+			}
+			
+			if (peutChangerDeTour)
+			if (partie.tourDe == partie.equipeJoueur) {
 				partie.tourSuivant();
 			}
 		}
 		
 		GameHandler.jeuActuel.dragCell = null;
+		GameHandler.jeuActuel.refreshWithMousePosition();
 
 	}
 	@Override public void mouseClicked(MouseEvent event) {

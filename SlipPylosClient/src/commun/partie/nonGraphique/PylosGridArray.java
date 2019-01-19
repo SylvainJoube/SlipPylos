@@ -96,13 +96,11 @@ public class PylosGridArray {
 		return grille.willFormSameColorRectangle(xCell, yCell, teamTypeAtCellPosition);
 	}
 	
-	// Vérifier que le pion que je veux déplacer (toPos) ne s'appuie pas sur le pion que je déplace (fromPos)
-	
-	
 	
 	/**Regarde s'il est possible de bouger ce pion :
 	 *  - regarde s'il existe bien sur le plateau
 	 *  - regarde s'il ne soutient aucune bille
+	 *  - regarde si le pion que je veux déplacer ne va pas s'appuier sur son ancienne position
 	 * @param checkCell
 	 * @param fromCell
 	 * @return
@@ -119,6 +117,8 @@ public class PylosGridArray {
 	/** Regarde s'il est possible de bouger ce pion :
 	 *  - regarde s'il existe bien sur le plateau
 	 *  - regarde s'il ne soutient aucune bille
+	 *  Et si initial_... != -1 :
+	 *    - regarde si le pion que je veux déplacer ne va pas s'appuier sur son ancienne position
 	 * @param hauteur commence (toujours) de 0 (la hauteur le plateau)
 	 * @param hauteur
 	 * @param xCell
@@ -150,9 +150,9 @@ public class PylosGridArray {
 				return false;
 			}
 		}
+		// Maintenant, je regarde si le pion que je veux déplacer ne va pas s'appuier sur son ancienne position
 		if (initial_hauteur != -1 && initial_xCell != -1 && initial_yCell != -1) {
 			if (hauteur == 0) return false; // impossible de déplacer un pion vers la hauteur 0 (toujours 1+)
-			// Maintenant, je regarde si le pion que je veux déplacer ne va pas s'appuier sur son ancienne position
 			// Liste des cases au-dessous
 			a1CheckCell = new PylosCell[4];
 			a1CheckCell[0] = new PylosCell(xCell    , yCell    , hauteur - 1); // haut gauche  au passage, on a pas forcément hauteur-1 == initial_hauteur, hauteur-2 == initial_hauteur est aussi possible
