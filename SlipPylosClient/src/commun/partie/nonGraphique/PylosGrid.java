@@ -1,8 +1,8 @@
 package commun.partie.nonGraphique;
 
 /**
- * Grille de jeu, � une hauteur donn�e
- * - A un tableau des cases, les cases � cette hauteur
+ * Grille de jeu, à une hauteur donnée
+ * - A un tableau des cases, les cases à cette hauteur
  *
  */
 public class PylosGrid {
@@ -53,7 +53,7 @@ public class PylosGrid {
 		if (hauteur == 0) return true; // case non prise et au-dessous, c'est le plateau : OK
 		
 		// Je regarde s'il y a bien les 4 boules n�cessaires en-dessous
-		// C'est � dire, pour la grille en dessous :
+		// C'est à dire, pour la grille en dessous :
 		//System.out.println("2PylosGrid.canPlaceAtPosition partie.a1Grid... h-1 = " + (hauteur - 1) + " xCell = "+xCell+" yCell="+yCell);
 		PylosGrid underlyingGrid = pylosGridArray.a1Grid[hauteur - 1];
 		//System.out.println("PylosGrid.canPlaceAtPosition partie.a1Grid...");
@@ -69,6 +69,15 @@ public class PylosGrid {
 	public void setCell_noCheck(int xCell, int yCell, TeamType teamType) {
 		a2Cell[xCell][yCell].occupeePar = teamType;
 	}
+	
+	/*
+	/** Retourne true si le pion peut être bougé : s'il ne soutient pas une autre bille, 
+	 * @return
+	 * /
+	public boolean canMovePawn(PylosCell checkCell) {
+		// 1) Je regarde si cette cellule est bien valide
+		
+	}*/
 	
 	public boolean setCell(int xCell, int yCell, TeamType teamType) {
 		if (!isValidCellPosition(xCell, yCell)) return false;
@@ -87,7 +96,7 @@ public class PylosGrid {
 	/**
 	 * Copier cette grille et en retourner une nouvelle.
 	 * @param arg_newPylosGridArray l'objet PylosGridArray auquel appartient cette grille
-	 * @return une nouvelle grille, identique � cette instance (copie des objets cellule �galement)
+	 * @return une nouvelle grille, identique à cette instance (copie des objets cellule �galement)
 	 */
 	public PylosGrid copy(PylosGridArray arg_newPylosGridArray) {
 		PylosGrid result = new PylosGrid(gridWidth, gridHeight, hauteur, arg_newPylosGridArray);
@@ -100,7 +109,7 @@ public class PylosGrid {
 	
 	public boolean willFormSameColorRectangle(int xCell, int yCell, TeamType teamTypeAtCellPosition) {
 		if (!isValidCellPosition(xCell, yCell)) return false;
-		// Je fais comme si le pion �tait pos�, qu'il le soit ou non
+		// Je fais comme si le pion était posé, qu'il le soit ou non
 		boolean okGauche = (getTeamAtCellPosition(xCell - 1, yCell) == teamTypeAtCellPosition);
 		boolean okDroite = (getTeamAtCellPosition(xCell + 1, yCell) == teamTypeAtCellPosition);
 		boolean okHaut = (getTeamAtCellPosition(xCell, yCell - 1) == teamTypeAtCellPosition);

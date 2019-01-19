@@ -38,16 +38,16 @@ public class CellDetection {
 		int gridWidthInCells  = nbCasesCoteGrilleActuelle;
 		int gridHeightInCells = nbCasesCoteGrilleActuelle;
 		
-		// Position de d�part de la grille de hauteur hauteurActuelle
+		// Position de départ de la grille de hauteur hauteurActuelle
 		int gridStartPosX = baseGridPos.x + hauteurActuelle * (cellWidth / 2);
 		int gridStartPosY = baseGridPos.y + hauteurActuelle * (cellHeight / 2);
 		// derni�re case de la grille
 		int gridStopPosX = gridStartPosX + cellWidth * (gridWidthInCells + 1); // derni�re case + 1
 		int gridStopPosY = gridStartPosY + cellHeight * (gridHeightInCells + 1);
 
-		if (mousePos.x < gridStartPosX) return null; // hors de la grille � gauche
+		if (mousePos.x < gridStartPosX) return null; // hors de la grille à gauche
 		if (mousePos.y < gridStartPosY) return null; // hors de la grille en haut
-		if (mousePos.x > gridStopPosX) return null; // hors de la grille � droite
+		if (mousePos.x > gridStopPosX) return null; // hors de la grille à droite
 		if (mousePos.y > gridStopPosY) return null; // hors de la grille en bas
 
 		int xCellInThisGrid = (mousePos.x - gridStartPosX) / cellWidth;
@@ -75,18 +75,18 @@ public class CellDetection {
 	
 	
 	/**
-	 * Cherche la case en dessous de la souris, en prenant en compte l'�tat actuel du jeu
+	 * Cherche la case en dessous de la souris, en prenant en compte l'état actuel du jeu
 	 * @param mousePos
 	 * @param baseGridPos
 	 * @param currentGame
 	 * @return
 	 */
-	public static PylosCellResult getCellUnderMouse(PylosPoint mousePos, PylosPoint baseGridPos, PylosPartie currentGame, TeamType equipeRecherchee) {
+	public static PylosCellResult getCellUnderMouse(PylosPoint mousePos, PylosPoint baseGridPos, PylosPartie currentGame, TeamType equipeRecherchee, int hauteurMinimaleRecherchee) {
 		
 		/* -> Je recherche la cellule sur laquelle je suis :
-		 * Je regarde la case � la hauteur h, si elle est dans la grille et qu'elle est libre, je la prends
+		 * Je regarde la case à la hauteur h, si elle est dans la grille et qu'elle est libre, je la prends
 		 *   si elle n'est pas dans la grille, je sors de la boucle
-		 *   si elle est dans la grille mais pas libre, je la retiens et je passe � la hauteur h+1
+		 *   si elle est dans la grille mais pas libre, je la retiens et je passe à la hauteur h+1
 		 */
 		PylosCell lastValidCell = null;
 		
@@ -120,7 +120,7 @@ public class CellDetection {
 		}
 		
 		
-		if (lastValidCell == null) return null; // aucune case valide trouv�e
+		if (lastValidCell == null) return null; // aucune case valide trouvée
 		if (lastValidCell.occupeePar != equipeRecherchee) return null;
 
 		PylosGrid currentGrid = currentGame.plateauActuel.a1Grid[lastValidCell.hauteur];
@@ -128,6 +128,10 @@ public class CellDetection {
 		
 		
 		boolean peutPoserIci = currentGrid.canPlaceAtPosition(lastValidCell.xCell, lastValidCell.yCell);
+		if (hauteurMinimaleRecherchee >= 0 && peutPoserIci) // s'il y a une condition sur la hauteur de recherche
+		if (lastValidCell.hauteur < hauteurMinimaleRecherchee) { // si je suis en dessous de cette heuteur minimale, je ne peux pas poser ici
+			peutPoserIci = false;
+		}
 		PylosCellResult result = new PylosCellResult(lastValidCell, peutPoserIci);
 		
 		return result;

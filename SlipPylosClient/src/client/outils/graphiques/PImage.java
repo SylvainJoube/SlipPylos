@@ -15,6 +15,15 @@ public class PImage {
 		graphics.drawImage((BufferedImage) image, rop, x, y);
 	}
 	
+	public static void drawImageAlpha_centered(Graphics2D graphics, Image image, int x, int y, double alpha) {
+		int imgWidth = image.getWidth(null);
+		int imgHeight = image.getHeight(null);
+		int newX = x - (int)imgWidth/2;
+		int newY = y - (int)imgHeight/2;
+		drawImageAlpha(graphics, image, newX, newY, alpha);
+	}
+	
+	
 	public static void drawImageColorAlpha(Graphics2D graphics, Image image, int x, int y, double red, double green, double blue, double alpha) {
 		float[] scales = { (float)red, (float)green, (float)blue, (float)alpha };
 		float[] offsets = new float[4];

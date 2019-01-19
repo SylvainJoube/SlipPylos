@@ -15,7 +15,9 @@ public class PylosPartie {
 	public TeamType tourDe = TeamType.BLANC;
 	//public IA_v1 ia = new IA_v1(TeamType.NOIR, this);
 	public TeamType equipeJoueur = TeamType.BLANC;
-	public boolean joueurAUtiliseSaReserve = false; // 1 utilisation de la r�serve de pions par tour, max
+	//public boolean joueurAUtiliseSaReserve = false; // 1 utilisation de la réserve de pions par tour, max
+	public boolean joueurAJoueUnPion = false; // Le joueur ne peut jouer qu'une seule fois un pion (poser un pion de sa réserve ou bouger un de ses pions pour le réhausser)
+	public int peutReprendrePionsNb = 0; // Si le joueur peut reprendre des pions (après avoir joué)
 	
 	public int computeNbJetonsTotal() {
 		int nbJetons = 0;
@@ -52,7 +54,7 @@ public class PylosPartie {
 		if (nbJetonsBlanc <= 0) return;
 		if (nbJetonsNoir <= 0) return;
 		
-		joueurAUtiliseSaReserve = false;
+		joueurAJoueUnPion = false;
 		if (tourDe == TeamType.BLANC)
 			tourDe = TeamType.NOIR;
 		else

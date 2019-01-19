@@ -2,13 +2,13 @@ package commun.partie.nonGraphique;
 
 /**
  * 
- * Tableau de Grille de pylos : chaque grille dans la liste de PylosGrid a une hauteur donn�e
+ * Tableau de Grille de pylos : chaque grille dans la liste de PylosGrid a une hauteur donnée
  *
  */
 public class PylosGridArray {
 	
 	public int nbCasesCoteBase;
-	public PylosGrid[] a1Grid; // Grille, � hautreur fix�e
+	public PylosGrid[] a1Grid; // Grille, hautreur fixée
 	
 	/**
 	 * Retourne la hauteur maximale du plateau (commen�ant � 0) soit l'index de la grille la plus haute.
@@ -20,7 +20,7 @@ public class PylosGridArray {
 	
 	/**
 	 * Constructeur.
-	 * @param arg_nbCasesCoteBase nombre de cases de c�t� � la base de la pyramide (nb de cases de c�t� du plateau)
+	 * @param arg_nbCasesCoteBase nombre de cases de côté à la base de la pyramide (nb de cases de c�t� du plateau)
 	 */
 	public PylosGridArray(int arg_nbCasesCoteBase) {
 		this(arg_nbCasesCoteBase, true);
@@ -49,11 +49,11 @@ public class PylosGridArray {
 	}
 	
 	/**
-	 * Attribuer une �quipe � une cellule donn�e.
+	 * Attribuer une équipe à une cellule donnée.
 	 * @param gridHeight hauteur (= index) de la grille sur laquelle placer la case
 	 * @param xCell position X dans la grille
 	 * @param yCell position Y dans la grille
-	 * @param teamType type de l'�quipe � placer ici
+	 * @param teamType type de l'équipe à placer ici
 	 */
 	public void setCell(int gridHeight, int xCell, int yCell, TeamType teamType) {
 		if (gridHeight < 0) {
@@ -69,9 +69,9 @@ public class PylosGridArray {
 	}
 	
 	/**
-	 * Copie le tableau de grilles, typiquement utile pour l'IA et la simulation des futurs �tats possibles du jeu.
-	 * Tous les objets sont copi�s.
-	 * @return une instance de PylosGridArray identique � celle-ci, tous les objets la consitituant sont copi�s.
+	 * Copie le tableau de grilles, typiquement utile pour l'IA et la simulation des futurs états possibles du jeu.
+	 * Tous les objets sont copiés.
+	 * @return une instance de PylosGridArray identique à celle-ci, tous les objets la consitituant sont copi�s.
 	 */
 	public PylosGridArray copy() {
 		PylosGridArray result = new PylosGridArray(nbCasesCoteBase);
@@ -83,7 +83,7 @@ public class PylosGridArray {
 	
 	/**
 	 * 
-	 * @param hauteur la heuteur de la grille, commen�ant � 0 (index)
+	 * @param hauteur la hauteur de la grille, commençant à 0 (index)
 	 * @param xCell
 	 * @param yCell
 	 * @param teamTypeAtCellPosition
@@ -95,5 +95,79 @@ public class PylosGridArray {
 		PylosGrid grille = a1Grid[hauteur];
 		return grille.willFormSameColorRectangle(xCell, yCell, teamTypeAtCellPosition);
 	}
+	
+	// Vérifier que le pion que je veux déplacer (toPos) ne s'appuie pas sur le pion que je déplace (fromPos)
+	
+	
+	
+	/**Regarde s'il est possible de bouger ce pion :
+	 *  - regarde s'il existe bien sur le plateau
+	 *  - regarde s'il ne soutient aucune bille
+	 * @param checkCell
+	 * @param fromCell
+	 * @return
+	 */
+	public boolean canMovePawn(PylosCell checkCell, PylosCell fromCell) {
+		if (fromCell == null) {
+			//System.out.println("PylosGridArray.canMovePawn : fromCell == null");
+			return canMovePawn(checkCell.hauteur, checkCell.xCell, checkCell.yCell, -1, -1, -1);
+		} else {
+			//System.out.println("PylosGridArray.canMovePawn : fromCell != null");
+			return canMovePawn(checkCell.hauteur, checkCell.xCell, checkCell.yCell, fromCell.hauteur, fromCell.xCell, fromCell.yCell);
+		}
+	}
+	/** Regarde s'il est possible de bouger ce pion :
+	 *  - regarde s'il existe bien sur le plateau
+	 *  - regarde s'il ne soutient aucune bille
+	 * @param hauteur commence (toujours) de 0 (la hauteur le plateau)
+	 * @param hauteur
+	 * @param xCell
+	 * @param yCell
+	 * @param initial_hauteur
+	 * @param initial_xCell
+	 * @param initial_yCell
+	 * @return
+	 */
+	public boolean canMovePawn(int hauteur, int xCell, int yCell, int initial_hauteur, int initial_xCell, int initial_yCell) {
+		if (hauteur < 0) return false;
+		if (hauteur >= a1Grid.length) return false;
+		PylosGrid grid = a1Grid[hauteur];
+		if (xCell < 0 || yCell < 0 || xCell >= grid.gridWidth || yCell >= grid.gridHeight) return false;
+		// Je vérifie qu'il n'y a pas de pions au-dessus
+		if (hauteur + 1 >= a1Grid.length) return false; // impossible de bouger le denier pion !
+		PylosGrid aboveGrid = a1Grid[hauteur + 1];
+		// Liste des cases au-dessus
+		PylosCell[] a1CheckCell = new PylosCell[4];
+		a1CheckCell[0] = new PylosCell(xCell - 1, yCell - 1, hauteur + 1); // haut gauche
+		a1CheckCell[1] = new PylosCell(xCell - 1, yCell    , hauteur + 1); // haut droite
+		a1CheckCell[2] = new PylosCell(xCell    , yCell - 1, hauteur + 1); // bas gauche
+		a1CheckCell[3] = new PylosCell(xCell    , yCell    , hauteur + 1); // bas droite
+		// Vérification que toutes les cases au-dessus ne sont pas prises
+		for (int iCell = 0; iCell < a1CheckCell.length; iCell++) {
+			PylosCell currentCell = a1CheckCell[iCell];
+			TeamType teamAtPos = aboveGrid.getTeamAtCellPosition(currentCell.xCell, currentCell.yCell);
+			if (teamAtPos != TeamType.AUCUNE && teamAtPos != TeamType.INVALIDE) { // == NOIR || == BLANC ici
+				return false;
+			}
+		}
+		if (initial_hauteur != -1 && initial_xCell != -1 && initial_yCell != -1) {
+			if (hauteur == 0) return false; // impossible de déplacer un pion vers la hauteur 0 (toujours 1+)
+			// Maintenant, je regarde si le pion que je veux déplacer ne va pas s'appuier sur son ancienne position
+			// Liste des cases au-dessous
+			a1CheckCell = new PylosCell[4];
+			a1CheckCell[0] = new PylosCell(xCell    , yCell    , hauteur - 1); // haut gauche  au passage, on a pas forcément hauteur-1 == initial_hauteur, hauteur-2 == initial_hauteur est aussi possible
+			a1CheckCell[1] = new PylosCell(xCell    , yCell + 1, hauteur - 1); // bas gauche
+			a1CheckCell[2] = new PylosCell(xCell + 1, yCell    , hauteur - 1); // haut droite
+			a1CheckCell[3] = new PylosCell(xCell + 1, yCell + 1, hauteur - 1); // bas droite
+			// Je vérifie donc que je ne déplace pas une bille pour la mettre au-dessus d'elle-même
+			for (int iCell = 0; iCell < a1CheckCell.length; iCell++) {
+				PylosCell currentCell = a1CheckCell[iCell];
+				if (currentCell.hauteur == initial_hauteur && currentCell.xCell == initial_xCell && currentCell.yCell == initial_yCell)
+					return false;
+			}
+		}
+		return true;
+	}
+	
 	
 }

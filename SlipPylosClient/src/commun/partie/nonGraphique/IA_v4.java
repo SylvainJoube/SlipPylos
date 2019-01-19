@@ -49,7 +49,7 @@ public class IA_v4 {
 		ia = null;
 	}
 	
-	// Impl�ment� par compatilit� pour IA_v1 et v2
+	// Implémenté par compatilité pour IA_v1 et v2
 	public static void joueUnCoup(TeamType equipeAJouer, PylosPartie partie, int profondeurRecherche) {
 		playOnce(partie, equipeAJouer, profondeurRecherche);
 	}
@@ -63,7 +63,7 @@ public class IA_v4 {
 			nbPionsNoir = partie.nbJetonsNoir;
 			plateauActuel = partie.plateauActuel.copy(); // pour ne pas emb�ter l'affichage graphique
 		} else {
-			// c'est d�j� initialis�
+			// c'est déjà initialisé
 		}
 		
 		if ( (profondeurDeRecherche <= 0) || (nbPionsBlanc <= 0) || (nbPionsNoir <= 0) ) {
@@ -72,7 +72,7 @@ public class IA_v4 {
 		
 		IA_v4_cell caseRetenue = null;
 		
-		// C'est � moi de jouer : Je prends le score maximal des cases �valu�es cette it�ration
+		// C'est à moi de jouer : Je prends le score maximal des cases évaluées cette itération
 		ArrayList<IA_v4_cell> playableCells = getPlayableCells(plateauActuel);
 		ArrayList<IA_v4_cell> sameScoreCells = new ArrayList<IA_v4_cell>();
 
@@ -123,7 +123,7 @@ public class IA_v4 {
 			Log.write("ERREUR IA_v4.playOnce_inst : caseRetenue == null");
 			return 0;
 		}
-		// Poser al�atoirement en piochant dans sameScoreCells
+		// Poser aléatoirement en piochant dans sameScoreCells
 		int size = sameScoreCells.size();
 		
 		if (size == 0) {
@@ -141,12 +141,12 @@ public class IA_v4 {
 		//Log.write("IA_v4.playOnce_inst : choosenIndex = " + choosenIndex);
 		
 		if (playForReal) {
-			poseJeton_noCheck(caseRetenue.hauteur, caseRetenue.xCell, caseRetenue.yCell, monEquipe); // incr�mente les compteurs de points
+			poseJeton_noCheck(caseRetenue.hauteur, caseRetenue.xCell, caseRetenue.yCell, monEquipe); // incrémente les compteurs de points
 			partie.plateauActuel = plateauActuel;
 			// Pose aussi sur le plateau du jeu, comme c'est aussi celui de la partie
 			partie.nbJetonsBlanc = nbPionsBlanc;
 			partie.nbJetonsNoir = nbPionsNoir;
-			return caseRetenue_alt.score; // est inutile, je le mets quand-m�me
+			return caseRetenue_alt.score; // est inutile, je le mets quand-même
 		} else {
 			return caseRetenue_alt.score;//caseRetenue.score;
 		}
@@ -155,12 +155,12 @@ public class IA_v4 {
 	
 	// Poser un pion sans faire aucune vérification
 	public void poseJeton_noCheck(int gridHeight, int xCell, int yCell, TeamType teamQuiJoueLePion) {
-		// j'enl�ve un pion à l'�quipe qui vient de le poser
+		// j'enlve un pion à l'équipe qui vient de le poser
 		if (teamQuiJoueLePion == TeamType.BLANC) nbPionsBlanc--;
 		if (teamQuiJoueLePion == TeamType.NOIR)  nbPionsNoir--;
 		// je pose le pion
 		setCell(gridHeight, xCell, yCell, teamQuiJoueLePion);
-		// Je regarde si un carré est créé : si la cellule (xCell, yCell, hauteur) appartient � un carr� de ma couleur, j'ajoute 1 pion pour moi, et mon adversaire en perd un (simplifi�)
+		// Je regarde si un carré est créé : si la cellule (xCell, yCell, hauteur) appartient à un carré de ma couleur, j'ajoute 1 pion pour moi, et mon adversaire en perd un (simplifié)
 		PylosGrid grid = plateauActuel.a1Grid[gridHeight];
 		if (grid.willFormSameColorRectangle(xCell, yCell, teamQuiJoueLePion)) {
 			if (teamQuiJoueLePion == TeamType.BLANC) {

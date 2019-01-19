@@ -9,7 +9,7 @@ package commun.partie.nonGraphique;
 public class PylosCell {
 	public int hauteur; // niveau dans la grille de jeu : 0 (directement sur le plateau), 1 (sur les premi�res boules), 2 (sur les boules 1), ...
 	public int xCell, yCell; // position de la case dans la grille
-	public TeamType occupeePar; // �quipe qui a cette case
+	public TeamType occupeePar; // équipe qui a cette case
 	
 	public PylosCell(int arg_xCell, int arg_yCell, int arg_hauteur) {
 		xCell = arg_xCell;

@@ -22,151 +22,9 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 
 import client.outils.graphiques.PImage;
-import commun.partie.nonGraphique.PylosCellResult;
-import commun.partie.nonGraphique.PylosPartie;
-import commun.partie.nonGraphique.PylosPoint;
 import commun.partie.nonGraphique.*;
 
-class CustomPoint extends Point {
-	public boolean validPoint = false;
-	public CustomPoint(int x, int y) {
-		super(x, y);
-	}
-}
 
-class MouseIsAbovePionSelection {
-	public static boolean check(int xMouse, int yMouse) {
-		int xDraw = GameHandler.jeuActuel.xDessinJetonsJoueur;
-		int yDraw = GameHandler.jeuActuel.yDessinJetonsJoueur;
-		
-		if ((xDraw <= xMouse)
-		&& (xDraw + CellDetection.cellWidth > xMouse)
-		&& (yDraw <= yMouse)
-		&& (yDraw + CellDetection.cellHeight > yMouse)) {
-			return true;
-		}
-		return false;
-	}
-}
-
-class MyMouseListener implements MouseListener {
-
-	@Override public void mouseExited(MouseEvent event) {
-		//LogWriter.Log("MyMouseListener.mouseExited :  event.getX = " + event.getX() + "event.getY = " + event.getY());
-	}
-	@Override public void mousePressed(MouseEvent event) {
-		LogWriter.Log("MyMouseListener.mousePressed :  event.getX = " + event.getX() + "event.getY = " + event.getY());
-		// 
-		
-		//boolean volonteJoueurPionEnMain = false;
-		if (!GameHandler.partieActuelle.joueurAUtiliseSaReserve)
-		if (MouseIsAbovePionSelection.check(event.getX(), event.getY())) {
-			GameHandler.jeuActuel.volonteJoueur = VolonteJoueur.PION_EN_MAIN;
-			//volonteJoueurPionEnMain = true;
-		}
-		
-		
-		
-	}
-	@Override public void mouseReleased(MouseEvent event) {
-		
-		if (GameHandler.jeuActuel.volonteJoueur == VolonteJoueur.PION_EN_MAIN) {
-			PylosPoint mousePos = new PylosPoint(event.getX(),  event.getY());
-			PylosPoint gridPos = new PylosPoint(GameHandler.jeuActuel.xGrid,  GameHandler.jeuActuel.yGrid);
-			PylosCellResult cell = CellDetection.getCellUnderMouse(mousePos, gridPos, GameHandler.partieActuelle, TeamType.AUCUNE);
-			
-			if (!GameHandler.partieActuelle.joueurAUtiliseSaReserve)
-			if (cell != null)
-			if (cell.occupeePar == TeamType.AUCUNE && cell.peutPoserIci) { // poser un pion ici
-				TeamType equipeJoueur = GameHandler.partieActuelle.equipeJoueur;
-				
-				GameHandler.partieActuelle.setCell(cell.hauteur, cell.xCell, cell.yCell, equipeJoueur);
-				GameHandler.partieActuelle.joueurAUtiliseSaReserve = true;
-				if (equipeJoueur == TeamType.BLANC) GameHandler.partieActuelle.nbJetonsBlanc--;
-				if (equipeJoueur == TeamType.NOIR)  GameHandler.partieActuelle.nbJetonsNoir--;
-				
-				if (GameHandler.partieActuelle.plateauActuel.willFormSameColorRectangle(cell.hauteur, cell.xCell, cell.yCell, equipeJoueur)) {
-					if ((equipeJoueur == TeamType.BLANC) && (GameHandler.partieActuelle.nbJetonsNoir > 0)) {
-						GameHandler.partieActuelle.nbJetonsBlanc++;
-						GameHandler.partieActuelle.nbJetonsNoir--;
-					}
-					if ((equipeJoueur == TeamType.NOIR) && (GameHandler.partieActuelle.nbJetonsBlanc > 0)) {
-						GameHandler.partieActuelle.nbJetonsBlanc--;
-						GameHandler.partieActuelle.nbJetonsNoir++;
-					}
-				}
-				//GameHandler.partieActuelle.tourSuivant();
-			}
-		}
-		
-		//if (!volonteJoueurPionEnMain) {
-		//	GameHandler.jeuActuel.volonteJoueur = VolonteJoueur.MAIN_LIBRE;
-		//}
-		GameHandler.jeuActuel.volonteJoueur = VolonteJoueur.MAIN_LIBRE;
-		PylosPartie partie = GameHandler.jeuActuel.partieActuelle;
-		if (GameHandler.tourSuivantPos.isInside(event.getX(), event.getY())) {
-			if (!partie.joueurAUtiliseSaReserve) {
-				LogWriter.Log("MyMouseListener.mousePressed : Impossible de passer votre tour lorsque vous n'avez pas encore joué !");
-			} else if (partie.tourDe == partie.equipeJoueur) {
-				partie.tourSuivant();
-			}
-		}
-		
-
-	}
-	@Override public void mouseClicked(MouseEvent event) {
-		
-	}
-	@Override public void mouseEntered(MouseEvent event) {
-		
-	}
-}
-
-class MyMouseMotionListener implements MouseMotionListener {
-
-	@Override
-	public void mouseDragged(MouseEvent event) {
-		mouseMoved(event);
-		//LogWriter.Log("MyMouseMotionListener.mouseDragged :  event.getX = " + event.getX() + "event.getY = " + event.getY());
-	}
-	@Override
-	public void mouseMoved(MouseEvent event) {
-		//LogWriter.Log("MyMouseMotionListener.mouseMoved :  event.getX = " + event.getX() + "event.getY = " + event.getY());
-
-		PylosPoint mousePos = new PylosPoint(event.getX(),  event.getY());
-		PylosPoint gridPos = new PylosPoint(GameHandler.jeuActuel.xGrid,  GameHandler.jeuActuel.yGrid);
-		
-		
-		GameHandler.jeuActuel.highlightCell = null;
-		// Si c'est l'�quipe du joueur qui joue, 
-		if (GameHandler.jeuActuel.volonteJoueur == VolonteJoueur.MAIN_LIBRE)
-		if (GameHandler.partieActuelle.tourDe == GameHandler.partieActuelle.equipeJoueur) {
-			PylosCellResult res = CellDetection.getCellUnderMouse(mousePos, gridPos, GameHandler.partieActuelle, GameHandler.partieActuelle.equipeJoueur);
-			GameHandler.jeuActuel.highlightCell = res;
-			//if (res != null) {
-			//	System.out.println("MyMouseMotionListener.mouseMoved() : res!=null   " + res);
-			//}
-		}
-		
-		if (MouseIsAbovePionSelection.check(event.getX(), event.getY()) && !GameHandler.partieActuelle.joueurAUtiliseSaReserve) {
-			GameHandler.highlightPionSelecton = true;
-		} else GameHandler.highlightPionSelecton = false;
-		
-		
-		if (GameHandler.tourSuivantPos.isInside(event.getX(), event.getY())) {
-			GameHandler.tourSuivantHighlight = true;
-		} else GameHandler.tourSuivantHighlight = false;
-		
-		if (GameHandler.jeuActuel.volonteJoueur == VolonteJoueur.PION_EN_MAIN) {
-			PylosCellResult res = CellDetection.getCellUnderMouse(mousePos, gridPos, GameHandler.partieActuelle, TeamType.AUCUNE);
-			GameHandler.jeuActuel.currentCellUnderMouse = res;
-		} else
-			GameHandler.jeuActuel.currentCellUnderMouse = null;
-		//if (res != null)
-			//System.out.println("MyMouseMotionListener.mouseMoved : res.hauteur =  " + res.hauteur + "  res.peutPoserIci = " + res.peutPoserIci + "  res.occupeePar = " + res.occupeePar);
-	}
-	
-}
 
 
 
@@ -182,15 +40,16 @@ public class GameHandler  extends Canvas {
 	public final int windowWidth = 1400;
 	public final int windowHeight = 960;
 	
+	//public boolean joueurVeutDeplacerUnPion = false; // quand le joueur essaie de déplacer un pion pour le monter
 	public int cellWidth = CellDetection.cellWidth;//100; // largeur d'une case de jeu
 	public int cellHeight = CellDetection.cellHeight;//100; // hauteur d'une case de jeu
 	//int cellSpaceBetweenCells = 4;
 	public int xGrid = 120;
 	public int yGrid = 120;
-
+	
 	public static PylosPartie partieActuelle = null;
 	public static GameHandler jeuActuel = null;
-	public PylosCellResult currentCellUnderMouse;
+	public PylosCellResult poserUnPionIci; // 
 	public int xDessinJetonsJoueur = 110;
 	public int yDessinJetonsJoueur = 10;
 	public VolonteJoueur volonteJoueur = VolonteJoueur.MAIN_LIBRE;
@@ -202,6 +61,8 @@ public class GameHandler  extends Canvas {
 	public PylosCell dragCell = null; // bouger un des pions du joueur
 	public PylosCell highlightCell = null; // mettre en surbrillance une case
 	
+	public int lastMouseX = 0;
+	public int lastMouseY = 0;
 	
 	
 	public CustomPoint cellPosToCoordinates(int xPosInCanvas, int yPosInCanvas, int layerLevel) { // layerLevel : niveau (0 - 3) sur lequel on est
@@ -250,7 +111,52 @@ public class GameHandler  extends Canvas {
 		
 	}
 	
-	// Dessin du jeton avec �crit le nombre de jetons restants dessus
+	public void refreshWithMousePosition() {
+		PylosPoint mousePos = new PylosPoint(GameHandler.jeuActuel.lastMouseX,  GameHandler.jeuActuel.lastMouseY);
+		PylosPoint gridPos = new PylosPoint(GameHandler.jeuActuel.xGrid,  GameHandler.jeuActuel.yGrid);
+		
+		GameHandler.jeuActuel.highlightCell = null;
+		// Si c'est l'équipe du joueur qui joue, 
+		if (GameHandler.jeuActuel.volonteJoueur == VolonteJoueur.MAIN_LIBRE)
+		if (GameHandler.partieActuelle.tourDe == GameHandler.partieActuelle.equipeJoueur) {
+			PylosCellResult res = CellDetection.getCellUnderMouse(mousePos, gridPos, GameHandler.partieActuelle, GameHandler.partieActuelle.equipeJoueur, -1);
+			GameHandler.jeuActuel.highlightCell = res;
+			//if (res != null) {
+			//	System.out.println("MyMouseMotionListener.mouseMoved() : res!=null   " + res);
+			//}
+		}
+		
+		if (MouseIsAbovePionSelection.check(GameHandler.jeuActuel.lastMouseX,  GameHandler.jeuActuel.lastMouseY) && !GameHandler.partieActuelle.joueurAJoueUnPion) {
+			GameHandler.highlightPionSelecton = true;
+		} else GameHandler.highlightPionSelecton = false;
+		
+		
+		if (GameHandler.tourSuivantPos.isInside(GameHandler.jeuActuel.lastMouseX,  GameHandler.jeuActuel.lastMouseY)) {
+			GameHandler.tourSuivantHighlight = true;
+		} else GameHandler.tourSuivantHighlight = false;
+		
+		if (GameHandler.jeuActuel.volonteJoueur == VolonteJoueur.PION_EN_MAIN
+			|| GameHandler.jeuActuel.volonteJoueur == VolonteJoueur.DEPLACER_UN_PION) {
+			
+			// Condition sur la hauteur : si je veux déplacer un pion, il faut que la destination soit plus haute
+			int hateurMinimale = -1;
+			if (GameHandler.jeuActuel.volonteJoueur == VolonteJoueur.DEPLACER_UN_PION)
+				hateurMinimale = GameHandler.jeuActuel.dragCell.hauteur + 1;
+			
+			
+			PylosCellResult res = CellDetection.getCellUnderMouse(mousePos, gridPos, GameHandler.partieActuelle, TeamType.AUCUNE, hateurMinimale);
+			if (res != null) {
+				boolean canMovePawn = partieActuelle.plateauActuel.canMovePawn(res, GameHandler.jeuActuel.dragCell);
+				res.peutPoserIci = ( res.peutPoserIci && canMovePawn );
+			}
+			GameHandler.jeuActuel.poserUnPionIci = res;
+			
+			
+		} else
+			GameHandler.jeuActuel.poserUnPionIci = null;
+	}
+	
+	// Dessin du jeton avec écrit le nombre de jetons restants dessus
 	public void drawJetonNb(Graphics2D g, Image jetonImage, int nb, int x, int y, Color fontColor) {
 		if (jetonImage == null)
 			return;
@@ -309,6 +215,7 @@ public class GameHandler  extends Canvas {
 			Image jetonBlancImg_highlight = RessourceManager.LoadImage("images/JetonBlancH.png");
 			Image jetonErreurImg = RessourceManager.LoadImage("images/JetonErreur.png");
 			Image tourSuivantImg = RessourceManager.LoadImage("images/TourSuivant.png");
+			Image jetonHighlight = RessourceManager.LoadImage("images/JetonHighlight.png");
 			
 			drawJetonNb(g, jetonNoirImg, partieActuelle.nbJetonsNoir, 10, 10, Color.WHITE);
 			drawJetonNb(g, jetonBlancImg, partieActuelle.nbJetonsBlanc, xDessinJetonsJoueur, yDessinJetonsJoueur, Color.BLACK);
@@ -350,20 +257,30 @@ public class GameHandler  extends Canvas {
 					int yCellPx = yCell * CellDetection.cellHeight + gridYOffsetPx + yGrid;
 					PylosCell currentCell = currentGrid.a2Cell[xCell][yCell];
 					
+					float drawWithAlpha = 1;
+					if (currentCell.estIdentique(dragCell)) {
+						drawWithAlpha = 0.4f;
+					}
+					switch (currentCell.occupeePar) {
+						case BLANC : PImage.drawImageAlpha(g, jetonBlancImg, xCellPx, yCellPx, drawWithAlpha); break; //g.drawImage(jetonBlancImg, xCellPx, yCellPx, null); break;
+						case NOIR : PImage.drawImageAlpha(g, jetonNoirImg, xCellPx, yCellPx, drawWithAlpha); break;
+						default : break;
+					}
+
 					if (currentCell.estIdentique(highlightCell)) {
-						switch (currentCell.occupeePar) {
+						PImage.drawImageAlpha(g, jetonHighlight, xCellPx, yCellPx, 1);
+					}
+
+					
+					
+					
+						
+						/*switch (currentCell.occupeePar) {
 						case BLANC : g.drawImage(jetonBlancImg_highlight, xCellPx, yCellPx, null); break;
 						case NOIR : g.drawImage(jetonNoirImg_highlight, xCellPx, yCellPx, null); break;
 						default : break;
-						}
-					}
-					else {
-						switch (currentCell.occupeePar) {
-						case BLANC : g.drawImage(jetonBlancImg, xCellPx, yCellPx, null); break;
-						case NOIR : g.drawImage(jetonNoirImg, xCellPx, yCellPx, null); break;
-						default : break;
-						}
-					}
+						}*/
+					
 				}
 				
 				
@@ -375,8 +292,8 @@ public class GameHandler  extends Canvas {
 			
 			g.drawString("Mouse pos : " + mousePos.x + ", " + mousePos.y, 10, 100);
 			
-			if (currentCellUnderMouse != null) {
-				PylosPoint pos = CellDetection.getPosInGridFromCellRes(currentCellUnderMouse);
+			if (poserUnPionIci != null) {
+				PylosPoint pos = CellDetection.getPosInGridFromCellRes(poserUnPionIci);
 				int xDraw = pos.x + xGrid;
 				int yDraw = pos.y + yGrid;
 				
@@ -388,18 +305,33 @@ public class GameHandler  extends Canvas {
 				default : break;
 				}
 				if (imageDrawn != null) {
-					PImage.drawImageColorAlpha(g, imageDrawn, xDraw, yDraw, 0.5, 0.5, 0.5, 0.1);
+					PImage.drawImageAlpha(g, imageDrawn, xDraw, yDraw, 0.5);
 				}
 				
 				/*if (partieActuelle.equipeJoueur == TeamType.NOIR) g.drawImage(jetonNoirImg, xDraw, yDraw, null);
 				if (partieActuelle.equipeJoueur == TeamType.BLANC) g.drawImage(jetonBlancImg, xDraw, yDraw, null);*/
 				
 				
-				if (!currentCellUnderMouse.peutPoserIci)
+				if (!poserUnPionIci.peutPoserIci)
 					PImage.drawImageAlpha(g, jetonErreurImg, xDraw, yDraw, 0.5);//g.drawImage(jetonErreurImg, xDraw, yDraw, null);
 					
 				
+			} else {
+				if (volonteJoueur == VolonteJoueur.PION_EN_MAIN || volonteJoueur == VolonteJoueur.DEPLACER_UN_PION) {
+					Image imageDrawn = null;
+					switch (partieActuelle.equipeJoueur) {
+					case NOIR : imageDrawn = jetonNoirImg; break;
+					case BLANC : imageDrawn = jetonBlancImg; break;
+					default : break;
+					}
+					if (imageDrawn != null) {
+						PImage.drawImageAlpha_centered(g, imageDrawn, lastMouseX, lastMouseY, 0.3);
+						PImage.drawImageAlpha_centered(g, jetonErreurImg, lastMouseX, lastMouseY, 0.3);
+					}
+				}
 			}
+			
+			
 			g.drawImage(tourSuivantImg, tourSuivantPos.x1, tourSuivantPos.y1, null);
 			
 			

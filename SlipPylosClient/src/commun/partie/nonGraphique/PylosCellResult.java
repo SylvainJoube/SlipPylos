@@ -8,7 +8,7 @@ package commun.partie.nonGraphique;
  */
 public class PylosCellResult extends PylosCell {
 	
-	public TeamType occupeePar; // pas occup�e
+	//public TeamType occupeePar; // pas occupée
 	public boolean peutPoserIci = false; // pas accessible (accessible = 4 blocs au-dessous)
 	
 	public PylosCellResult(int arg_xCell, int arg_yCell, int arg_hauteur, TeamType arg_occupeePar, boolean arg_peutPoserIci) {
