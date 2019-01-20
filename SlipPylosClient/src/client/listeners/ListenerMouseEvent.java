@@ -1,6 +1,6 @@
-package client.partie.graphique;
+package client.listeners;
 
-class ListenerMouseEvent {
+public class ListenerMouseEvent {
 	final public int button, mouseX, mouseY;
 	final public ListenerMouseEventType eventType;
 	

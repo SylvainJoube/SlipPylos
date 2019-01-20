@@ -1,12 +1,13 @@
 package client.partie.graphique;
 
+import client.listeners.ListenerMouseEvent;
+import client.listeners.Listeners;
+
 /** Gère uniquement les évènements en jeu (partie)
- * Faire un autre EventHandler pour les autres salled (connexion, choix partie...)
- * @author admin
- *
+ * Faire un autre EventHandler pour les autres salles (connexion, choix partie...)
+ * 
  */
 public class GameEventHandler {
-	
 	
 	/** Boucle exécutant les évènements en attente
 	 */

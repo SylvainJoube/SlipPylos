@@ -18,7 +18,7 @@ public class CellDetection {
 	
 	/**
 	 * 
-	 * @param mousePos    position de la souris � l'écran
+	 * @param mousePos    position de la souris à l'écran
 	 * @param baseGridPos position de la grille de base (hauteur 0) � l'�cran
 	 * @return
 	 */

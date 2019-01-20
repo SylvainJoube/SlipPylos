@@ -1,4 +1,4 @@
-﻿package client.partie.graphique;
+﻿package client.outils.graphiques;
 
 /**
  * Détection des collisions simples
@@ -7,7 +7,7 @@
  */
 
 public class BoxPosition {
-	int x1, y1, x2, y2;
+	public final int x1, y1, x2, y2;
 	
 	public BoxPosition(int arg_x1, int arg_y1, int arg_x2, int arg_y2) {
 		x1 = arg_x1;

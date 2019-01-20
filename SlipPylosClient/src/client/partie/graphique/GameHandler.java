@@ -8,6 +8,14 @@ import java.awt.Point;
 import java.awt.image.BufferedImage;
 import java.awt.image.RescaleOp;
 
+import client.listeners.CustomPoint;
+//import client.listeners.CustomPoint;
+import client.listeners.ListenerMouseEvent;
+//import client.listeners.MouseIsAbovePionSelection;
+import client.listeners.GenericMouseListener;
+import client.listeners.GenericMouseMotionListener;
+import client.outils.graphiques.BoxPosition;
+import client.outils.graphiques.GraphicsHandler;
 import client.outils.graphiques.PImage;
 import commun.partie.nonGraphique.*;
 
@@ -59,15 +67,13 @@ public class GameHandler {
 		GameHandler.partieActuelle = new PylosPartie(arg_modeDeJeu); // créer la partie avant les Listener
 	}
 	
-	public void setAsCurrentRoom() {
+	/*public void setAsCurrentRoom() {
 		if (jeuActuel != null) {
 			GraphicsHandler ginstance = GraphicsHandler.getMainInstance();
-			ginstance.addMouseListener(new MyMouseListener());
-			ginstance.addMouseMotionListener(new MyMouseMotionListener());
+			ginstance.addMouseListener(new GenericMouseListener());
+			ginstance.addMouseMotionListener(new GenericMouseMotionListener());
 		}
-	}
-	
-	
+	}*/
 	
 	public CustomPoint cellPosToCoordinates(int xPosInCanvas, int yPosInCanvas, int layerLevel) { // layerLevel : niveau (0 - 3) sur lequel on est
 		CustomPoint pt = new CustomPoint(-1, -1);
@@ -213,17 +219,17 @@ public class GameHandler {
 	private void drawAllJetonsNb() {
 
 		int xNoir = xDessinJetons;
-		int yNoir = xDessinJetons;
+		int yNoir = yDessinJetons;
 		int xBlanc = xNoir;// + CellDetection.cellWidth;
 		int yBlanc = yNoir + CellDetection.cellHeight;
 		
 		if (partieActuelle.equipeJoueur == TeamType.NOIR) {
-			xDessinJetonsJoueur = xDessinJetons;
-			yDessinJetonsJoueur = yDessinJetons;
+			xDessinJetonsJoueur = xNoir;
+			yDessinJetonsJoueur = yNoir;
 		}
 		if (partieActuelle.equipeJoueur == TeamType.BLANC) {
-			xDessinJetonsJoueur = xDessinJetons;
-			yDessinJetonsJoueur = yDessinJetons;
+			xDessinJetonsJoueur = xBlanc;
+			yDessinJetonsJoueur = yBlanc;
 		}
 		
 		drawJetonNb(currentGraphics, jetonNoirImg, partieActuelle.nbJetonsNoir, xNoir, yNoir, Color.WHITE);
@@ -515,4 +521,19 @@ public class GameHandler {
 	}
 	
 	
+}
+
+class MouseIsAbovePionSelection {
+	public static boolean check(int xMouse, int yMouse) {
+		int xDraw = GameHandler.jeuActuel.xDessinJetonsJoueur;
+		int yDraw = GameHandler.jeuActuel.yDessinJetonsJoueur;
+		
+		if ((xDraw <= xMouse)
+		&& (xDraw + CellDetection.cellWidth > xMouse)
+		&& (yDraw <= yMouse)
+		&& (yDraw + CellDetection.cellHeight > yMouse)) {
+			return true;
+		}
+		return false;
+	}
 }

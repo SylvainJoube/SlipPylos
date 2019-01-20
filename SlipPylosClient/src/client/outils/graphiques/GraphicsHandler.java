@@ -1,4 +1,4 @@
-package client.partie.graphique;
+package client.outils.graphiques;
 
 import java.awt.Canvas;
 import java.awt.Color;
@@ -13,25 +13,35 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
+import javax.swing.JTextField;
 
-import commun.partie.nonGraphique.PylosPartie;
+import client.listeners.GenericMouseListener;
+import client.listeners.GenericMouseMotionListener;
+import client.listeners.Listeners;
+import client.partie.graphique.GameHandler;
+import client.partie.graphique.LogWriter;
+import client.partie.graphique.RoomType;
+import client.room1.Room1Handler;
+//import commun.partie.nonGraphique.PylosPartie;
+import commun.partie.nonGraphique.ModeDeJeu;
 
 /** Classe s'occupant de la fenêtre de l'application
  * D'autres classes, comme GameHandler, dessinent dans et via GraphicsHandler.
  *
  */
+@SuppressWarnings("serial") // cet objet ne sera de toute façon pas serialisé
 public class GraphicsHandler extends Canvas {
 	
 	/** The strategy that allows us to use accelerate page flipping */
 	private BufferStrategy currentBufferStrategy;
-	public final int windowWidth = 1400;
-	public final int windowHeight = 960;
+	static public final int windowWidth = 1200;
+	static public final int windowHeight = 800;
 	
 	public AtomicBoolean gameRunning = new AtomicBoolean(true);
 	private Graphics2D currentGraphics = null;
 	private static GraphicsHandler mainInstance = null; // une seule instance possible
 	
-	public static RoomType currentRoomType = RoomType.PARTIE;
+	public static RoomType currentRoomType = RoomType.AUCUN;
 	
 	public GraphicsHandler() throws Exception {
 		if (mainInstance != null) {
@@ -49,6 +59,7 @@ public class GraphicsHandler extends Canvas {
 		return (Graphics2D) mainInstance.currentBufferStrategy.getDrawGraphics();
 	}
 	
+	JTextField myJt;
 	
 	public void initWindow() {
 		JFrame container = new JFrame("Jeu de pylos en java");
@@ -57,7 +68,7 @@ public class GraphicsHandler extends Canvas {
 		panel.setLayout(null);
 		setBounds(0, 0, windowWidth, windowHeight); // setup our canvas size and put it into the content of the frame
 		panel.add(this);
-		setIgnoreRepaint(true); // Tell AWT not to bother repainting our canvas since we're going to do that ourself in accelerated mode
+		setIgnoreRepaint(false); // Tell AWT not to bother repainting our canvas since we're going to do that ourself in accelerated mode
 		container.pack(); // finally make the window visible 
 		container.setResizable(false);
 		container.setVisible(true);
@@ -67,10 +78,21 @@ public class GraphicsHandler extends Canvas {
 				System.exit(0);
 			}
 		});
+		myJt = new JTextField("Mon test !");
+		myJt.setBounds(50,100, 200, 30);
+		panel.add(myJt);
+		myJt.repaint();
 		// create the buffering strategy which will allow AWT to manage our accelerated graphics
 		createBufferStrategy(2);
 		currentBufferStrategy = getBufferStrategy();
 		LogWriter.Log("GameHandler.InitWindow : currentPath = " + System.getProperty("user.dir"));
+		// Centrer la fenêtre
+		container.setLocationRelativeTo(null);
+		
+		// Ajout de l'écoute de la souris
+		GraphicsHandler ginstance = this;// = GraphicsHandler.getMainInstance();
+		ginstance.addMouseListener(new GenericMouseListener());
+		ginstance.addMouseMotionListener(new GenericMouseMotionListener());
 	}
 	
 	public void loop() {
@@ -96,6 +118,11 @@ public class GraphicsHandler extends Canvas {
 			if (currentRoomType == RoomType.PARTIE) {
 				GameHandler.staticGameLoop();
 			}
+			if (currentRoomType == RoomType.MENU_CHOIX_TYPE_PARTIE) {
+				Room1Handler.staticLoop();
+			}
+			myJt.repaint();
+			
 			
 			// finally, we've completed drawing so clear up the graphics
 			// and flip the buffer over
@@ -109,7 +136,20 @@ public class GraphicsHandler extends Canvas {
 			
 			
 		}
-		
-		
 	}
+	
+	public static void roomGoTo_game(ModeDeJeu modeDeJeu) {
+		Listeners.clearEvents();
+		currentRoomType = RoomType.PARTIE;
+		//GameHandler game = 
+		new GameHandler(modeDeJeu);
+	}
+	
+	public static void roomGoTo_menuChoixTypePartie() {
+		Listeners.clearEvents();
+		currentRoomType = RoomType.MENU_CHOIX_TYPE_PARTIE;
+		//Room1Handler room1Handler = 
+		new Room1Handler();
+	}
+	
 }

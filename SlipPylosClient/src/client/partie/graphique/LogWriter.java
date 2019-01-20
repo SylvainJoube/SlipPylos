@@ -1,7 +1,7 @@
 ﻿package client.partie.graphique;
 
 // Classe statique, écrivant les logs sur la console et dans un fichier
-class LogWriter {
+public class LogWriter {
 	//public static LogWriter lWriter = new LogW
 	
 	

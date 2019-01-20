@@ -23,11 +23,11 @@ public class RessourceManager {
 		super();
 	}
 	
-	// Liste des images charg�es
+	// Liste des images chargées
 	private static HashMap<String, BufferedImage> a1LoadedImage = new HashMap<String, BufferedImage>();
 	
 	public static BufferedImage LoadImage(String imagePathOnDisk) {
-		// Je regarde si je n'ai pas d�j� charg� l'image
+		// Je regarde si je n'ai pas déjà chargé l'image
 		BufferedImage alreadyLoadedImage = GetImageFromPath(imagePathOnDisk);
 		if (alreadyLoadedImage != null)
 			return alreadyLoadedImage;
@@ -48,12 +48,12 @@ public class RessourceManager {
 			return null;
 		}
 		
-		if (buffImage != null) { // ajout � la HashMap si l'image a bien �t� charg�e
+		if (buffImage != null) { // ajout à la HashMap si l'image a bien été chargée
 			a1LoadedImage.put(imagePathOnDisk, buffImage);
 		}
 		return buffImage;
 	}
-	// Retrouver une image deuis le chemin d'acc�s disque
+	// Retrouver une image deuis le chemin d'accès disque
 	public static BufferedImage GetImageFromPath(String imagePathOnDisk) {
 		BufferedImage localImage = a1LoadedImage.get(imagePathOnDisk);
 		return localImage;
