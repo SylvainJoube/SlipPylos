@@ -13,12 +13,12 @@ import commun.partie.nonGraphique.*;
 
 public class CellDetection {
 	
-	public static int cellWidth = 100; // largeur d'une case de jeu
-	public static int cellHeight = 100; // hauteur d'une case de jeu
+	public static int cellWidth = 97; // largeur d'une case de jeu
+	public static int cellHeight = 97; // hauteur d'une case de jeu
 	
 	/**
 	 * 
-	 * @param mousePos    position de la souris � l'�cran
+	 * @param mousePos    position de la souris � l'écran
 	 * @param baseGridPos position de la grille de base (hauteur 0) � l'�cran
 	 * @return
 	 */
@@ -41,8 +41,8 @@ public class CellDetection {
 		// Position de départ de la grille de hauteur hauteurActuelle
 		int gridStartPosX = baseGridPos.x + hauteurActuelle * (cellWidth / 2);
 		int gridStartPosY = baseGridPos.y + hauteurActuelle * (cellHeight / 2);
-		// derni�re case de la grille
-		int gridStopPosX = gridStartPosX + cellWidth * (gridWidthInCells + 1); // derni�re case + 1
+		// dernière case de la grille
+		int gridStopPosX = gridStartPosX + cellWidth * (gridWidthInCells + 1); // dernière case + 1
 		int gridStopPosY = gridStartPosY + cellHeight * (gridHeightInCells + 1);
 
 		if (mousePos.x < gridStartPosX) return null; // hors de la grille à gauche

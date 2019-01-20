@@ -1,25 +1,12 @@
 package client.partie.graphique;
 
-import java.awt.Canvas;
 import java.awt.Color;
-import java.awt.Dimension;
 import java.awt.FontMetrics;
 import java.awt.Graphics2D;
 import java.awt.Image;
-import java.awt.MouseInfo;
 import java.awt.Point;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.awt.image.BufferStrategy;
 import java.awt.image.BufferedImage;
 import java.awt.image.RescaleOp;
-import java.util.ArrayList;
-import java.awt.event.MouseEvent;
-
-import javax.swing.JFrame;
-import javax.swing.JPanel;
 
 import client.outils.graphiques.PImage;
 import commun.partie.nonGraphique.*;
@@ -49,8 +36,12 @@ public class GameHandler {
 	public PylosCell dragCell = null;      // bouger un des pions du joueur
 	public PylosCell highlightCell = null; // mettre en surbrillance une case (souris passe dessus)
 	
-	public int xDessinJetonsJoueur = 110;
-	public int yDessinJetonsJoueur = 10;
+
+	public int xDessinJetons = 10;
+	public int yDessinJetons = yGrid;
+	// Calculé dans drawAllJetonsNb() :
+	public int xDessinJetonsJoueur = 0;
+	public int yDessinJetonsJoueur = 0;
 	public VolonteJoueur volonteJoueur = VolonteJoueur.MAIN_LIBRE;
 	public static boolean highlightPionSelecton = false;
 	
@@ -200,8 +191,8 @@ public class GameHandler {
 
 	private Image jetonNoirImg = RessourceManager.LoadImage("images/JetonNoir.png");
 	private Image jetonBlancImg = RessourceManager.LoadImage("images/JetonBlanc.png");
-	private Image jetonNoirImg_highlight = RessourceManager.LoadImage("images/JetonNoirH.png");
-	private Image jetonBlancImg_highlight = RessourceManager.LoadImage("images/JetonBlancH.png");
+	//private Image jetonNoirImg_highlight = RessourceManager.LoadImage("images/JetonNoirH.png");
+	//private Image jetonBlancImg_highlight = RessourceManager.LoadImage("images/JetonBlancH.png");
 	private Image jetonErreurImg = RessourceManager.LoadImage("images/JetonErreur.png");
 	private Image tourSuivantImg = RessourceManager.LoadImage("images/TourSuivant.png");
 	private Image jetonHighlightImg = RessourceManager.LoadImage("images/JetonHighlight.png");
@@ -209,8 +200,8 @@ public class GameHandler {
 	private void loadImages() {
 		jetonNoirImg = RessourceManager.LoadImage("images/JetonNoir.png");
 		jetonBlancImg = RessourceManager.LoadImage("images/JetonBlanc.png");
-		jetonNoirImg_highlight = RessourceManager.LoadImage("images/JetonNoirH.png");
-		jetonBlancImg_highlight = RessourceManager.LoadImage("images/JetonBlancH.png");
+		//jetonNoirImg_highlight = RessourceManager.LoadImage("images/JetonNoirH.png");
+		//jetonBlancImg_highlight = RessourceManager.LoadImage("images/JetonBlancH.png");
 		jetonErreurImg = RessourceManager.LoadImage("images/JetonErreur.png");
 		tourSuivantImg = RessourceManager.LoadImage("images/TourSuivant.png");
 		jetonHighlightImg = RessourceManager.LoadImage("images/JetonHighlight.png");
@@ -220,15 +211,40 @@ public class GameHandler {
 	private Graphics2D currentGraphics = null;
 	
 	private void drawAllJetonsNb() {
-		drawJetonNb(currentGraphics, jetonNoirImg, partieActuelle.nbJetonsNoir, 10, 10, Color.WHITE);
-		drawJetonNb(currentGraphics, jetonBlancImg, partieActuelle.nbJetonsBlanc, xDessinJetonsJoueur, yDessinJetonsJoueur, Color.BLACK);
+
+		int xNoir = xDessinJetons;
+		int yNoir = xDessinJetons;
+		int xBlanc = xNoir;// + CellDetection.cellWidth;
+		int yBlanc = yNoir + CellDetection.cellHeight;
+		
+		if (partieActuelle.equipeJoueur == TeamType.NOIR) {
+			xDessinJetonsJoueur = xDessinJetons;
+			yDessinJetonsJoueur = yDessinJetons;
+		}
+		if (partieActuelle.equipeJoueur == TeamType.BLANC) {
+			xDessinJetonsJoueur = xDessinJetons;
+			yDessinJetonsJoueur = yDessinJetons;
+		}
+		
+		drawJetonNb(currentGraphics, jetonNoirImg, partieActuelle.nbJetonsNoir, xNoir, yNoir, Color.WHITE);
+		drawJetonNb(currentGraphics, jetonBlancImg, partieActuelle.nbJetonsBlanc, xBlanc, yBlanc, Color.BLACK);
 		if (highlightPionSelecton) {
+			
 			if (partieActuelle.equipeJoueur == TeamType.BLANC) {
+				PImage.drawImageAlpha(currentGraphics, jetonHighlightImg, xBlanc, yBlanc, 1);
+			}
+			if (partieActuelle.equipeJoueur == TeamType.NOIR) {
+				PImage.drawImageAlpha(currentGraphics, jetonHighlightImg, xNoir, yNoir, 1);
+			}
+			
+			//drawJetonNb(currentGraphics, jetonBlancImg_highlight, partieActuelle.nbJetonsBlanc, xDessinJetonsJoueur, yDessinJetonsJoueur, Color.BLACK);
+			
+			/*if (partieActuelle.equipeJoueur == TeamType.BLANC) {
 				drawJetonNb(currentGraphics, jetonBlancImg_highlight, partieActuelle.nbJetonsBlanc, xDessinJetonsJoueur, yDessinJetonsJoueur, Color.BLACK);
 			}
 			if (partieActuelle.equipeJoueur == TeamType.NOIR) {
 				drawJetonNb(currentGraphics, jetonNoirImg_highlight, partieActuelle.nbJetonsBlanc, xDessinJetonsJoueur, yDessinJetonsJoueur, Color.BLACK);
-			}
+			}*/
 		}
 	}
 	
@@ -308,11 +324,14 @@ public class GameHandler {
 			
 			/*if (partieActuelle.equipeJoueur == TeamType.NOIR) g.drawImage(jetonNoirImg, xDraw, yDraw, null);
 			if (partieActuelle.equipeJoueur == TeamType.BLANC) g.drawImage(jetonBlancImg, xDraw, yDraw, null);*/
+
+			//System.out.println("GameHandler.drawPoserPion : test...");
+			//System.out.println("GameHandler.drawPoserPion : poserUnPionIci == null ? -> " + (poserUnPionIci == null));
+			//System.out.println("GameHandler.drawPoserPion : poserUnPionIci.peutPoserIci =  " + (poserUnPionIci.peutPoserIci)); il y avait une NullPointerException ici avant l'implémentation du GameEventHandler
 			
 			
-			if (!poserUnPionIci.peutPoserIci)
+			if (! poserUnPionIci.peutPoserIci)
 				PImage.drawImageAlpha(currentGraphics, jetonErreurImg, xDraw, yDraw, 0.5);//g.drawImage(jetonErreurImg, xDraw, yDraw, null);
-				
 			
 		} else {
 			// 2) Si aucune case n'est trouvée pour le pion, je le dessine sous ma sourie, centré
@@ -340,7 +359,8 @@ public class GameHandler {
 	// Sera appelé par GraphicsHandler
 	public void gameLoop() {
 		currentGraphics = GraphicsHandler.getMainGraphics();
-		
+
+		GameEventHandler.staticLoop();
 		// Chargement des images nécessaires à l'affichage
 		loadImages();
 		// Dessin du nombre restant de jetons
@@ -351,6 +371,7 @@ public class GameHandler {
 		drawPawnsOnGrid();
 		// Dessin de la future position du pion à poser
 		drawPoserPion();
+		
 		
 		currentGraphics.drawImage(tourSuivantImg, tourSuivantPos.x1, tourSuivantPos.y1, null);
 		
@@ -364,5 +385,134 @@ public class GameHandler {
 		}
 		*/
 	}
+	
+	public void mousePressed(ListenerMouseEvent mouseEvent) {
+		//LogWriter.Log("MyMouseMotionListener.mousePressed :  mouseEvent.mouseX = " + mouseEvent.mouseX + " mouseEvent.mouseY = " + mouseEvent.mouseY);
+		
+		GameHandler.jeuActuel.lastMouseX = mouseEvent.mouseX;
+		GameHandler.jeuActuel.lastMouseY = mouseEvent.mouseY;
+		
+		GameHandler.jeuActuel.refreshWithMousePosition();
+		
+		//boolean volonteJoueurPionEnMain = false;
+		if (!GameHandler.partieActuelle.joueurAJoueUnPion) { // si le joueur n'a pas encore joué de pion
+			
+			if (MouseIsAbovePionSelection.check(mouseEvent.mouseX, mouseEvent.mouseY)) {
+				GameHandler.jeuActuel.volonteJoueur = VolonteJoueur.PION_EN_MAIN;
+				//volonteJoueurPionEnMain = true;
+				//LogWriter.Log("MyMouseListener.mousePressed :  prendre un pion !");
+			}
+			// Tenter de déplacer un pion de son jeu pour le remonter
+			if (GameHandler.jeuActuel.volonteJoueur == VolonteJoueur.MAIN_LIBRE)
+			if (GameHandler.jeuActuel.dragCell == null)
+			if (GameHandler.jeuActuel.highlightCell != null) {
+				//LogWriter.Log("MyMouseListener.mousePressed :  déplacer un pion !");
+				PylosGridArray plateauActuel = GameHandler.partieActuelle.plateauActuel;
+				PylosCell tryMoveCell = GameHandler.jeuActuel.highlightCell;
+				boolean canMovePawn = plateauActuel.canMovePawn(tryMoveCell, GameHandler.jeuActuel.dragCell);
+				if (canMovePawn) {
+					GameHandler.jeuActuel.dragCell = GameHandler.jeuActuel.highlightCell;
+					GameHandler.jeuActuel.volonteJoueur = VolonteJoueur.DEPLACER_UN_PION;
+					//LogWriter.Log("MyMouseListener.mousePressed :  déplacer un pion OK OK OK !");
+				}
+			}
+		}
+	}
+	
+	public void mouseReleased(ListenerMouseEvent mouseEvent) {
+		//LogWriter.Log("MyMouseMotionListener.mouseReleased :  mouseEvent.mouseX = " + mouseEvent.mouseX + " mouseEvent.mouseY = " + mouseEvent.mouseY);
+		GameHandler.jeuActuel.lastMouseX = mouseEvent.mouseX;
+		GameHandler.jeuActuel.lastMouseY = mouseEvent.mouseY;
+
+		GameHandler.jeuActuel.refreshWithMousePosition();
+		// met à jour GameHandler.jeuActuel.poserUnPionIci
+		
+		if (GameHandler.jeuActuel.volonteJoueur == VolonteJoueur.PION_EN_MAIN
+			|| GameHandler.jeuActuel.volonteJoueur == VolonteJoueur.DEPLACER_UN_PION) {
+			//PylosPoint mousePos = new PylosPoint(mouseEvent.mouseX, mouseEvent.mouseY);
+			//PylosPoint gridPos = new PylosPoint(GameHandler.jeuActuel.xGrid,  GameHandler.jeuActuel.yGrid);
+			// Condition sur la hauteur : si je veux déplacer un pion, il faut que la destination soit plus haute
+			//int hateurMinimale = -1;
+			//if (GameHandler.jeuActuel.volonteJoueur == VolonteJoueur.DEPLACER_UN_PION)
+			//	hateurMinimale = GameHandler.jeuActuel.dragCell.hauteur + 1;
+			
+			
+			PylosCellResult peutPoserPionIci = GameHandler.jeuActuel.poserUnPionIci;
+			
+			TeamType equipeJoueur = GameHandler.partieActuelle.equipeJoueur;
+			
+			if (peutPoserPionIci != null)
+			if (peutPoserPionIci.peutPoserIci) { // poser un pion ici
+				
+				GameHandler.partieActuelle.setCell(peutPoserPionIci.hauteur, peutPoserPionIci.xCell, peutPoserPionIci.yCell, equipeJoueur);
+				GameHandler.partieActuelle.joueurAJoueUnPion = true;
+				
+				if (GameHandler.jeuActuel.volonteJoueur != VolonteJoueur.DEPLACER_UN_PION) {
+					if (equipeJoueur == TeamType.BLANC) GameHandler.partieActuelle.nbJetonsBlanc--;
+					if (equipeJoueur == TeamType.NOIR)  GameHandler.partieActuelle.nbJetonsNoir--;
+				} else {
+					// Je supprime l'ancien pion
+					PylosCell dragCell = GameHandler.jeuActuel.dragCell;
+					GameHandler.partieActuelle.setCell(dragCell.hauteur, dragCell.xCell, dragCell.yCell, TeamType.AUCUNE);
+				}
+				
+				if (GameHandler.partieActuelle.plateauActuel.willFormSameColorRectangle(peutPoserPionIci.hauteur, peutPoserPionIci.xCell, peutPoserPionIci.yCell, equipeJoueur)) {
+					GameHandler.partieActuelle.peutReprendrePionsNb = 2;
+				}
+				//GameHandler.partieActuelle.tourSuivant();
+			}
+		}
+		
+		if (GameHandler.jeuActuel.volonteJoueur == VolonteJoueur.REPRENDRE_UN_PION) {
+			if (GameHandler.jeuActuel.pickUpCell != null) { // actualisé juste au-dessus via : GameHandler.jeuActuel.refreshWithMousePosition();
+				// Reprendre ce pion
+				PylosCell pickUpCell = GameHandler.jeuActuel.pickUpCell;
+				GameHandler.partieActuelle.setCell(pickUpCell.hauteur, pickUpCell.xCell, pickUpCell.yCell, TeamType.AUCUNE);
+				TeamType equipeJoueur = GameHandler.partieActuelle.equipeJoueur;
+				if (equipeJoueur == TeamType.BLANC) GameHandler.partieActuelle.nbJetonsBlanc++;
+				if (equipeJoueur == TeamType.NOIR)  GameHandler.partieActuelle.nbJetonsNoir++;
+				
+				GameHandler.partieActuelle.peutReprendrePionsNb--;
+				GameHandler.jeuActuel.refreshWithMousePosition(); // actualisation fonctionnelle et graphique
+			}
+		}
+		
+		
+		//if (!volonteJoueurPionEnMain) {
+		//	GameHandler.jeuActuel.volonteJoueur = VolonteJoueur.MAIN_LIBRE;
+		//}
+		GameHandler.jeuActuel.volonteJoueur = VolonteJoueur.MAIN_LIBRE;
+		PylosPartie partie = GameHandler.partieActuelle;
+		if (GameHandler.tourSuivantPos.isInside(mouseEvent.mouseX, mouseEvent.mouseY)) {
+			boolean peutChangerDeTour = true;
+			if (!partie.joueurAJoueUnPion) {
+				LogWriter.Log("MyMouseListener.mousePressed : Impossible de passer votre tour lorsque vous n'avez pas encore joué !");
+				peutChangerDeTour = false;
+			}
+			
+			if (GameHandler.partieActuelle.peutReprendrePionsNb > 1) {
+				LogWriter.Log("MyMouseListener.mousePressed : Impossible de passer votre tour lorsque vous n'avez repris au moins un des pions qui vons sont dûs !");
+				peutChangerDeTour = false;
+			}
+			
+			if (peutChangerDeTour)
+			if (partie.tourDe == partie.equipeJoueur) {
+				partie.tourSuivant();
+			}
+		}
+		
+		GameHandler.jeuActuel.dragCell = null;
+		GameHandler.jeuActuel.refreshWithMousePosition();
+	}
+	
+
+	public void mouseMoved(ListenerMouseEvent mouseEvent) {
+		//LogWriter.Log("MyMouseMotionListener.mouseMoved :  mouseEvent.mouseX = " + mouseEvent.mouseX + " mouseEvent.mouseY = " + mouseEvent.mouseY);
+		GameHandler.jeuActuel.lastMouseX = mouseEvent.mouseX;
+		GameHandler.jeuActuel.lastMouseY = mouseEvent.mouseY;
+		GameHandler.jeuActuel.refreshWithMousePosition();
+		
+	}
+	
 	
 }

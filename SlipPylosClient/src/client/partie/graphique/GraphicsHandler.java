@@ -93,7 +93,9 @@ public class GraphicsHandler extends Canvas {
 			currentGraphics.drawString("Mouse pos : " + mousePos.x + ", " + mousePos.y, 10, 100);
 			
 			// Dessin du bon type d'écran
-			if (currentRoomType == RoomType.PARTIE) GameHandler.staticGameLoop();
+			if (currentRoomType == RoomType.PARTIE) {
+				GameHandler.staticGameLoop();
+			}
 			
 			// finally, we've completed drawing so clear up the graphics
 			// and flip the buffer over
