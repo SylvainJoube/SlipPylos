@@ -41,7 +41,7 @@ public class Room1Handler {
 	private double time = 0;
 	private int buttonWidth = 400;
 	private int buttonHeight = 42;
-	private int buttonHeightSpace = 4;
+	private int buttonHeightSpace = 8;
 	
 	/*
 	public void setAsCurrentRoom() {
@@ -77,14 +77,14 @@ public class Room1Handler {
 		buttonList.add(button);
 		yButton += buttonHeight + buttonHeightSpace;
 		// Jouer via Internet -> écran suivant "se connecter"
-		button = new Room1Button(4, xButton, yButton, spr_MenuSelectionJeu_reseauLocal);
+		button = new Room1Button(4, xButton, yButton, spr_MenuSelectionJeu_internet);
 		buttonList.add(button);
 		yButton += buttonHeight + buttonHeightSpace;
 	}
 	
 	public void loop() {
 		currentGraphics = GraphicsHandler.getMainGraphics();
-		Listeners.refreshFrameListenerEvents(); // pour faire la détection des collisions en même temps que l'affichage graphique
+		
 		//loadImages();
 
 		int xMouse = Listeners.frame_getMouseX();
@@ -92,6 +92,7 @@ public class Room1Handler {
 		
 		int mouseOverButtonIndex = -1;
 		Room1Button mouseOverButton = null;
+		int defaultPosOffset = 3;
 		for (int iButton = 0; iButton < buttonList.size(); iButton++) {
 			Room1Button button = buttonList.get(iButton);
 			int posOffset = 0;
@@ -99,7 +100,7 @@ public class Room1Handler {
 			if (box.isInside(xMouse,  yMouse)) { // souris
 				mouseOverButtonIndex = iButton;
 				mouseOverButton = button;
-				posOffset = 2;
+				posOffset = defaultPosOffset;
 				if (Listeners.frame_mouseReleased() && iButton == 0) {
 					// Changer de salle : 
 					//GraphicsHandler.getMainInstance().currentRoomType = RoomType.PARTIE;
@@ -119,9 +120,9 @@ public class Room1Handler {
 		time += 0.2;
 		if (mouseOverButton != null) {
 			double imgAlpha = ((Math.cos(time) + 1) / 2) * 0.2 + 0.2;
-			PImage.drawImageAlpha(currentGraphics, spr_MenuSelectionJeu_bright, mouseOverButton.x - 2, mouseOverButton.y - 2, imgAlpha);
+			PImage.drawImageAlpha(currentGraphics, spr_MenuSelectionJeu_bright, mouseOverButton.x - defaultPosOffset, mouseOverButton.y - defaultPosOffset, imgAlpha);
 		}
-		
+		 
 		//PImage.drawImageAlpha(currentGraphics, spr_MenuSelectionJeu_solo, 10, 10, 1);
 		//time = time % 2 * Math.PI;
 		
@@ -138,12 +139,14 @@ public class Room1Handler {
 	private Image spr_MenuSelectionJeu_reseauLocal = null;
 	private Image spr_MenuSelectionJeu_solo = null;
 	private Image spr_MenuSelectionJeu_bright = null;
+	private Image spr_Bouton_retour = null;
 	private void loadImages() {
 		spr_MenuSelectionJeu_hotSeat = RessourceManager.LoadImage("images/MenuSelectionJeu_hotSeat.png");
 		spr_MenuSelectionJeu_internet = RessourceManager.LoadImage("images/MenuSelectionJeu_internet.png");
 		spr_MenuSelectionJeu_reseauLocal = RessourceManager.LoadImage("images/MenuSelectionJeu_reseauLocal.png");
 		spr_MenuSelectionJeu_solo = RessourceManager.LoadImage("images/MenuSelectionJeu_solo.png");
 		spr_MenuSelectionJeu_bright = RessourceManager.LoadImage("images/MenuSelectionJeu_bright.png");
+		
 		
 	}
 	

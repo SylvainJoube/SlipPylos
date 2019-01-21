@@ -35,4 +35,20 @@ public class PImage {
 		RescaleOp rop = new RescaleOp(scales, offsets, null);
 		graphics.drawImage((BufferedImage) image, rop, x, y);
 	}
+
+	public static int getImageWidth(Image image) {
+		if (image == null) return 0;
+		try {
+			return image.getWidth(null);
+		} catch (Exception e) { }
+		return 0;
+	}
+	
+	public static int getImageHeight(Image image) {
+		if (image == null) return 0;
+		try {
+			return image.getHeight(null);
+		} catch (Exception e) { }
+		return 0;
+	}
 }

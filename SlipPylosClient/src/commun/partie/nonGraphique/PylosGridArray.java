@@ -97,6 +97,18 @@ public class PylosGridArray {
 	}
 	
 	
+	public boolean isValidPawnPosition(int hauteur, int xCell, int yCell) {
+		if (hauteur < 0) return false;
+		if (hauteur >= a1Grid.length) return false;
+		PylosGrid grid = a1Grid[hauteur];
+		if (xCell < 0 || yCell < 0 || xCell >= grid.gridWidth || yCell >= grid.gridHeight) return false;
+		return true; // toutes les conditions sont passées avec succès
+	}
+	public boolean isValidPawnPosition(PylosCell checkCell) {
+		if (checkCell == null) return false;
+		return isValidPawnPosition(checkCell.hauteur, checkCell.xCell, checkCell.yCell);
+	}
+	
 	/**Regarde s'il est possible de bouger ce pion :
 	 *  - regarde s'il existe bien sur le plateau
 	 *  - regarde s'il ne soutient aucune bille
@@ -129,10 +141,9 @@ public class PylosGridArray {
 	 * @return
 	 */
 	public boolean canMovePawn(int hauteur, int xCell, int yCell, int initial_hauteur, int initial_xCell, int initial_yCell) {
-		if (hauteur < 0) return false;
-		if (hauteur >= a1Grid.length) return false;
-		PylosGrid grid = a1Grid[hauteur];
-		if (xCell < 0 || yCell < 0 || xCell >= grid.gridWidth || yCell >= grid.gridHeight) return false;
+		
+		if ( ! isValidPawnPosition(hauteur, xCell, yCell) ) return false;
+		
 		// Je vérifie qu'il n'y a pas de pions au-dessus
 		if (hauteur + 1 >= a1Grid.length) return false; // impossible de bouger le denier pion !
 		PylosGrid aboveGrid = a1Grid[hauteur + 1];

@@ -11,7 +11,8 @@ public class IA_v0_stupid {
 		//IA_v0_stupid ia = new IA_v0_stupid();
 		ArrayList<PylosCell> a1PlayableCell = getPlayableCells(partie.plateauActuel);
 		PylosCell choosenCell = null;
-		if (a1PlayableCell.size() != 0) choosenCell = a1PlayableCell.get(0);
+		if (a1PlayableCell.size() == 0) return;
+		choosenCell = a1PlayableCell.get(0);
 		partie.plateauActuel.setCell(choosenCell.hauteur, choosenCell.xCell, choosenCell.yCell, monEquipe);
 		// j'enlve un pion à l'équipe qui vient de le poser
 		if (monEquipe == TeamType.BLANC) partie.nbJetonsBlanc--;

@@ -42,7 +42,6 @@ public class Listeners {
 	static private int currentMouseX = 0;
 	static private int currentMouseY = 0;
 	
-	
 	/** Rechercher le plus ancien évènement non encore traîté
 	 * @return le plus ancien ListenerMouseEvent non encore traîté
 	 */
@@ -64,6 +63,14 @@ public class Listeners {
 			canAccessToMouseEventList.set(false); // est là pour ne pas bloquer le thread qui interroge getMouseEvent() avec synchronized
 			mouseEventList.add(arg_addEvent);
 			canAccessToMouseEventList.set(true);
+			currentMouseX = arg_addEvent.mouseX; // mise à jour immédiate, pour frame_getMouse...(), pour la gestion d'évènements framé à frame et non évènements par évènements
+			currentMouseY = arg_addEvent.mouseY;
+			switch (arg_addEvent.eventType) {
+			case MOVED : mouseMovedThisFrame = true; break;
+			case PRESSED : mousePressedThisFrame = true; break;
+			case RELEASED : mouseReleasedThisFrame = true; break;
+			default : break;
+			}
 		}
 	}
 	
@@ -90,6 +97,7 @@ public class Listeners {
 			// pas de modification pour currentMouseX, currentMouseY si aucun évènement
 			// Dans tous les cas, je prends la dernière position connue pour la souris
 			for (ListenerMouseEvent mEvent : mouseEventList) {
+				
 				switch (mEvent.eventType) {
 				case MOVED : mouseMovedThisFrame = true; break;
 				case PRESSED : mousePressedThisFrame = true; break;
@@ -103,7 +111,7 @@ public class Listeners {
 			mouseEventList.clear();
 		}
 	}
-
+	
 	public static int frame_getMouseX() {
 		return currentMouseX;
 	}
@@ -118,6 +126,13 @@ public class Listeners {
 	}
 	public static boolean frame_mouseMoved() {
 		return mouseMovedThisFrame;
+	}
+	/** Réinitialiser l'état de la souris sans supprimer les évènements
+	 */
+	public static void frame_clearMouseSate() {
+		mousePressedThisFrame = false;
+		mouseReleasedThisFrame = false;
+		mouseMovedThisFrame = false;
 	}
 	
 	

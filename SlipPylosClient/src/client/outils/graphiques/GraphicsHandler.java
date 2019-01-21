@@ -3,12 +3,16 @@ package client.outils.graphiques;
 import java.awt.Canvas;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.Graphics2D;
+import java.awt.GraphicsEnvironment;
+import java.awt.Image;
 import java.awt.MouseInfo;
 import java.awt.Point;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.image.BufferStrategy;
+import java.io.File;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.swing.JFrame;
@@ -20,6 +24,7 @@ import client.listeners.GenericMouseMotionListener;
 import client.listeners.Listeners;
 import client.partie.graphique.GameHandler;
 import client.partie.graphique.LogWriter;
+import client.partie.graphique.RessourceManager;
 import client.partie.graphique.RoomType;
 import client.room1.Room1Handler;
 //import commun.partie.nonGraphique.PylosPartie;
@@ -42,6 +47,7 @@ public class GraphicsHandler extends Canvas {
 	private static GraphicsHandler mainInstance = null; // une seule instance possible
 	
 	public static RoomType currentRoomType = RoomType.AUCUN;
+	public static String currentRoomName = "Pas de nom !";
 	
 	public GraphicsHandler() throws Exception {
 		if (mainInstance != null) {
@@ -59,7 +65,7 @@ public class GraphicsHandler extends Canvas {
 		return (Graphics2D) mainInstance.currentBufferStrategy.getDrawGraphics();
 	}
 	
-	JTextField myJt;
+	//JTextField myJt;
 	
 	public void initWindow() {
 		JFrame container = new JFrame("Jeu de pylos en java");
@@ -78,10 +84,11 @@ public class GraphicsHandler extends Canvas {
 				System.exit(0);
 			}
 		});
-		myJt = new JTextField("Mon test !");
-		myJt.setBounds(50,100, 200, 30);
-		panel.add(myJt);
-		myJt.repaint();
+		//myJt = new JTextField("Mon test !");
+		//myJt.setBounds(50, 100, 200, 30);
+		//panel.add(myJt);
+		//myJt.repaint();
+		
 		// create the buffering strategy which will allow AWT to manage our accelerated graphics
 		createBufferStrategy(2);
 		currentBufferStrategy = getBufferStrategy();
@@ -113,15 +120,24 @@ public class GraphicsHandler extends Canvas {
 			Color col = new Color(200, 20, 200);
 			currentGraphics.setColor(col);
 			currentGraphics.drawString("Mouse pos : " + mousePos.x + ", " + mousePos.y, 10, 100);
+			drawRoomName();
 			
 			// Dessin du bon type d'écran
 			if (currentRoomType == RoomType.PARTIE) {
 				GameHandler.staticGameLoop();
+				drawReturnButton(); // l'état de la souris est utile pour 
+				Listeners.frame_clearMouseSate();
+				// pas de Listeners.clearEvents(); ici, c'est GameHandler qui s'en charge !
 			}
 			if (currentRoomType == RoomType.MENU_CHOIX_TYPE_PARTIE) {
+				Listeners.refreshFrameListenerEvents(); // pour faire la détection des collisions en même temps que l'affichage graphique
 				Room1Handler.staticLoop();
+				// surtout pas de Listeners.clearEvents(); c'est refreshFrameListenerEvents() qui s'en charge !
+				// seulement pour GameHandler : Listeners.frame_clearMouseSate();
 			}
-			myJt.repaint();
+			
+			//myJt.repaint();
+			//myJt.paint(currentGraphics);
 			
 			
 			// finally, we've completed drawing so clear up the graphics
@@ -150,6 +166,56 @@ public class GraphicsHandler extends Canvas {
 		currentRoomType = RoomType.MENU_CHOIX_TYPE_PARTIE;
 		//Room1Handler room1Handler = 
 		new Room1Handler();
+	}
+	
+	public static void drawReturnButton() {
+		if (mainInstance == null) return;
+		int xMouse = Listeners.frame_getMouseX();
+		int yMouse = Listeners.frame_getMouseY();
+		Image spr_Bouton_retour = RessourceManager.LoadImage("images/Bouton_retour.png");
+		// Dessin du bouton retour
+		int xBoutonRetour = 10;
+		int yBoutonRetour = 10;
+		int boutonRetourWidth = PImage.getImageWidth(spr_Bouton_retour);
+		int boutonRetourHeight = PImage.getImageHeight(spr_Bouton_retour);
+		BoxPosition box = new BoxPosition(xBoutonRetour, yBoutonRetour, xBoutonRetour + boutonRetourWidth, yBoutonRetour + boutonRetourHeight);
+		int posOffset = 0;
+		boolean changeRoom = false;
+		if (box.isInside(xMouse,  yMouse)) { // souris
+			posOffset = 3;
+			double colorFactor = 0.1;
+			PImage.drawImageColorAlpha(mainInstance.currentGraphics, spr_Bouton_retour, xBoutonRetour, yBoutonRetour, colorFactor, colorFactor, colorFactor, 1);
+			if (Listeners.frame_mouseReleased()) {
+				changeRoom = true;
+			}
+		}
+		PImage.drawImageAlpha(mainInstance.currentGraphics, spr_Bouton_retour, xBoutonRetour - posOffset, yBoutonRetour - posOffset, 1);
+		if (changeRoom) {
+			switch (currentRoomType) {
+			case MENU_CHOIX_TYPE_PARTIE : break;
+			case PARTIE : roomGoTo_menuChoixTypePartie(); break;
+			}
+		}
+		//
+		
+	}
+	private void drawRoomName() {
+		// currentRoomName  currentGraphics
+		if (currentGraphics == null) return;
+		int xRoomName = 150;
+		int yRoomName = 26;
+		currentGraphics.setFont(new Font("TimesRoman", Font.PLAIN, 40)); 
+		currentGraphics.drawString(currentRoomName, xRoomName, yRoomName);
+		
+	}
+	
+	private void importFonts() {
+		/*try {
+		     GraphicsEnvironment ge =  GraphicsEnvironment.getLocalGraphicsEnvironment();
+		     ge.registerFont(Font.createFont(Font.TRUETYPE_FONT, new File("path/to/your/font/sampleFont.ttf"));
+		} catch (IOException|FontFormatException e) {
+		     //Handle exception
+		}*/
 	}
 	
 }
