@@ -5,7 +5,7 @@ public class PylosPartie {
 	
 	public int nbJetonsBlanc = 0;//15;
 	public int nbJetonsNoir = 0;//15;
-	public static final int nbCasesCote = 3; // nombre de cases par c�t�
+	public static final int nbCasesCote = 4; // nombre de cases par coté
 	private int nbJetonsTotal;
 	public int hauteurMax = nbCasesCote - 1;
 	//public PylosGrid[] a1Grid;
@@ -32,8 +32,8 @@ public class PylosPartie {
 	public PylosPartie(ModeDeJeu arg_modeDeJeu) { // constructeur
 		plateauActuel = new PylosGridArray(nbCasesCote);
 		nbJetonsTotal = computeNbJetonsTotal();
-		nbJetonsBlanc = nbJetonsTotal / 2 + 200;
-		nbJetonsNoir = nbJetonsTotal / 2 + 200;
+		nbJetonsBlanc = nbJetonsTotal / 2;
+		nbJetonsNoir = nbJetonsTotal / 2;
 		modeDeJeu = arg_modeDeJeu;
 		if (modeDeJeu == ModeDeJeu.HOT_SEAT) {
 			equipeJoueur = tourDe;
@@ -120,10 +120,6 @@ public class PylosPartie {
 		
 		
 		
-
-		
-		
-		
 		/*if (modeDeJeu == ModeDeJeu.SOLO_LOCAL) {
 		}*/
 		
@@ -142,40 +138,15 @@ public class PylosPartie {
 			faireJouerIA();
 			tourSuivant();
 		}
-			
-			/*if (tourDe == TeamType.NOIR) {
-				
-				
-				IA_v0_stupid.joueUnCoup(TeamType.NOIR, this, 4000);
-				joueurAJoueUnPion = true;
-				// peutReprendrePionsNb = 0; normallement géré par l'IA
-				//IA_v4.joueUnCoup(TeamType.NOIR, this, 4);
-				System.out.println("PylosPartie : Tour suivant (l'IA vient de jouer)");
-				/*try {
-					Thread.sleep(0);
-				} catch (InterruptedException e) {
-					
-				}* /
-				tourSuivant();
-			}
-		}*/
-		/*if (tourDe == TeamType.BLANC) {
-			IA_v4.joueUnCoup(TeamType.BLANC, this, 4);
-			System.out.println("PylosPartie : Tour suivant");
-			try {
-				Thread.sleep(40);
-			} catch (InterruptedException e) {
-				
-			}
-			tourSuivant();
-		}*/
 		
 		return true;
 	}
 	
 	private void faireJouerIA() {
 		IA_v0_stupid.joueUnCoup(TeamType.NOIR, this, 4000);
+		//IA_v4.joueUnCoup(TeamType.NOIR, this, 4);
 		joueurAJoueUnPion = true;
+		// peutReprendrePionsNb = 0; normallement géré par l'IA
 		System.out.println("PylosPartie : faireJouerIA()");
 	}
 	

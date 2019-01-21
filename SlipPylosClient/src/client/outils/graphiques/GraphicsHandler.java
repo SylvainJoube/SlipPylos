@@ -16,7 +16,10 @@ import java.io.File;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JPasswordField;
 import javax.swing.JTextField;
 
 import client.listeners.GenericMouseListener;
@@ -29,6 +32,34 @@ import client.partie.graphique.RoomType;
 import client.room1.Room1Handler;
 //import commun.partie.nonGraphique.PylosPartie;
 import commun.partie.nonGraphique.ModeDeJeu;
+
+
+class AsynchronousBu implements Runnable {
+	
+	@Override
+	public void run() {
+		JPanel panel = new JPanel();
+		JLabel label = new JLabel("Enter a password:");
+		JPasswordField pass = new JPasswordField(10);
+		JPasswordField pass2 = new JPasswordField(10);
+		pass.setBounds(10, 10, 70, 200);
+		panel.add(label);
+		panel.add(pass);
+		panel.add(pass2);
+		String[] options = new String[]{"OK", "Cancel"};
+		int option = JOptionPane.showOptionDialog(null, panel, "The title",
+		                         JOptionPane.NO_OPTION, JOptionPane.PLAIN_MESSAGE,
+		                         null, options, options[0]);
+		if(option == 0) // pressing OK button
+		{
+		    char[] password = pass.getPassword();
+		    System.out.println("Your password is: " + new String(password));
+		}
+		
+		
+		String test1 = JOptionPane.showInputDialog("Please input mark for test 1: ");
+	}
+}
 
 /** Classe s'occupant de la fenêtre de l'application
  * D'autres classes, comme GameHandler, dessinent dans et via GraphicsHandler.
@@ -65,14 +96,31 @@ public class GraphicsHandler extends Canvas {
 		return (Graphics2D) mainInstance.currentBufferStrategy.getDrawGraphics();
 	}
 	
+	JTextField exempleTextField = new JTextField("--> Nouveau texte à modifier <--");
+	
 	//JTextField myJt;
 	
 	public void initWindow() {
 		JFrame container = new JFrame("Jeu de pylos en java");
 		JPanel panel = (JPanel) container.getContentPane(); // get hold the content of the frame and set up the resolution of the game
 		panel.setPreferredSize(new Dimension(windowWidth, windowHeight));
+		
+		
 		panel.setLayout(null);
 		setBounds(0, 0, windowWidth, windowHeight); // setup our canvas size and put it into the content of the frame
+		Color col = new Color(236, 232, 230);
+		
+		exempleTextField.setBackground(col);
+		//exempleTextField.setSelectedTextColor(Color.RED);
+		exempleTextField.setForeground(Color.black);
+		exempleTextField.setBorder(null);
+		Font ft = exempleTextField.getFont();
+		
+		
+		//exempleTextField.setFont();
+		exempleTextField.setBounds(500, 100, 300, 30);
+		panel.add(exempleTextField);
+		
 		panel.add(this);
 		setIgnoreRepaint(false); // Tell AWT not to bother repainting our canvas since we're going to do that ourself in accelerated mode
 		container.pack(); // finally make the window visible 
@@ -104,6 +152,8 @@ public class GraphicsHandler extends Canvas {
 	
 	public void loop() {
 		long lastLoopTime = System.currentTimeMillis();
+		
+		// test -> new Thread(new AsynchronousBu()).start();
 		
 		// keep looping round till the game ends
 		while (gameRunning.get()) {
