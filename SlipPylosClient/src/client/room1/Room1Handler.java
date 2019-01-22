@@ -52,7 +52,6 @@ public class Room1Handler {
 	
 	private Graphics2D currentGraphics;
 	private ArrayList<Room1Button> buttonList = new ArrayList<Room1Button>();
-	
 	public Room1Handler() {
 		initButtons();
 	}
@@ -110,6 +109,11 @@ public class Room1Handler {
 					// Changer de salle : 
 					//GraphicsHandler.getMainInstance().currentRoomType = RoomType.PARTIE;
 					GraphicsHandler.roomGoTo_game(ModeDeJeu.HOT_SEAT);
+				}
+				if (Listeners.frame_mouseReleased() && iButton == 2) {
+					// Changer de salle : 
+					//GraphicsHandler.getMainInstance().currentRoomType = RoomType.PARTIE;
+					GraphicsHandler.roomGoTo_menuReseauLocal();
 				}
 				
 				double colorIntensity = 0.1;

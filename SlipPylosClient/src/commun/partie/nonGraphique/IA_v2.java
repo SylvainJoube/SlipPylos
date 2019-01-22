@@ -25,12 +25,12 @@ class IA_v2_recur {
 	//boolean rechercherMax; // rechercher max : true si je recherche le score maximal de equipeQuiJoueCeTour, 
 	
 	
-	public IA_v2_recur(TeamType arg_equipeQueJeDoisAider, TeamType arg_equipeQuiJoueCeTour, int arg_nbPionsBlanc, int arg_nbPionsNoir, PylosGridArray ancienPlateauACopier) {
+	public IA_v2_recur(TeamType arg_equipeQueJeDoisAider, TeamType arg_equipeQuiJoueCeTour, int arg_nbPionsBlanc, int arg_nbPionsNoir, PylosGridArray ancienPlateauACopier, PylosPartie arg_partie) {
 		equipeQueJeDoisAider = arg_equipeQueJeDoisAider;
 		equipeQuiJoueCeTour = arg_equipeQuiJoueCeTour;
 		nbPionsBlanc = arg_nbPionsBlanc;
 		nbPionsNoir = arg_nbPionsNoir;
-		plateauActuel = ancienPlateauACopier.copy();
+		plateauActuel = ancienPlateauACopier.copy(arg_partie);
 	}
 	public IA_v2_recur(IA_v2_recur iaTourPrecedent) {
 		if (iaTourPrecedent.equipeQuiJoueCeTour == TeamType.NOIR) equipeQuiJoueCeTour = TeamType.BLANC;
@@ -162,7 +162,7 @@ public class IA_v2 {
 				for (int yCell = 0; yCell < grid.gridHeight; yCell++) { // toutes les cases en y
 					if (grid.canPlaceAtPosition(xCell, yCell)) { // si je peux placer un pion � cette position, je place
 						
-						IA_v2_recur iaRecur = new IA_v2_recur(equipeAJouer, equipeAJouer, partie.nbJetonsBlanc, partie.nbJetonsNoir, partie.plateauActuel);
+						IA_v2_recur iaRecur = new IA_v2_recur(equipeAJouer, equipeAJouer, partie.nbJetonsBlanc, partie.nbJetonsNoir, partie.plateauActuel, partie);
 						iaRecur.posePion_noCheck(iGrid, xCell, yCell, equipeAJouer);
 						
 						double scoreCellule = iaRecur.computeScore(profondeurRecherche);

@@ -93,7 +93,7 @@ public class IA_v3 {
 		
 		nbPionsBlanc = partie.nbJetonsBlanc;
 		nbPionsNoir = partie.nbJetonsNoir;
-		plateauActuel = partie.plateauActuel.copy();
+		plateauActuel = partie.plateauActuel.copy(partie);
 		//IA_v3_jetonsNb jetonNb = new IA_v3_jetonsNb(partie.nbJetonsNoir, partie.nbJetonsBlanc);
 		//IA_v3_jetonsNb jetonNbInitial = new IA_v3_jetonsNb(partie.nbJetonsNoir, partie.nbJetonsBlanc);
 		IA_v3_cell caseRetenue = null;

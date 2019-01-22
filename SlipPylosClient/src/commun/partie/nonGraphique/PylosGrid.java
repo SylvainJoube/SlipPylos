@@ -47,12 +47,12 @@ public class PylosGrid {
 	
 	// Retourne true si la case est libre et qu'il y a 4 boules au-dessous
 	public boolean canPlaceAtPosition(int xCell, int yCell) {
-		if (getTeamAtCellPosition(xCell, yCell) != TeamType.AUCUNE) return false; // case d�j� prise
+		if (getTeamAtCellPosition(xCell, yCell) != TeamType.AUCUNE) return false; // case déjà prise
 		
 		//System.out.println("PylosGrid.canPlaceAtPosition hauteur = " + hauteur);
 		if (hauteur == 0) return true; // case non prise et au-dessous, c'est le plateau : OK
 		
-		// Je regarde s'il y a bien les 4 boules n�cessaires en-dessous
+		// Je regarde s'il y a bien les 4 boules nécessaires en-dessous
 		// C'est à dire, pour la grille en dessous :
 		//System.out.println("2PylosGrid.canPlaceAtPosition partie.a1Grid... h-1 = " + (hauteur - 1) + " xCell = "+xCell+" yCell="+yCell);
 		PylosGrid underlyingGrid = pylosGridArray.a1Grid[hauteur - 1];
@@ -107,6 +107,12 @@ public class PylosGrid {
 		return result;
 	}
 	
+	/** 
+	 *  @param xCell
+	 *  @param yCell
+	 *  @param teamTypeAtCellPosition
+	 *  @return
+	 */
 	public boolean willFormSameColorRectangle(int xCell, int yCell, TeamType teamTypeAtCellPosition) {
 		if (!isValidCellPosition(xCell, yCell)) return false;
 		// Je fais comme si le pion était posé, qu'il le soit ou non
@@ -134,6 +140,39 @@ public class PylosGrid {
 		return false;
 	}
 	
-	
+	/**
+	 *  @param xCell
+	 *  @param yCell
+	 *  @param teamTypeAtCellPosition
+	 *  @return
+	 */
+	public boolean willFormSameColorLine(int xCell, int yCell, TeamType teamTypeAtCellPosition) {
+		if (!isValidCellPosition(xCell, yCell)) return false;
+		// Je regarde s'il y a une ligne de la même équipe sur tout le plateau
+		boolean formsALine = true;
+		// Vérification de l'axe des abscisses (Ox)
+		for (int temp_xCell = 0; temp_xCell < gridWidth; temp_xCell++) {
+			// J'ignore la cellule (xCell, yCell)
+			if (temp_xCell == xCell) continue;
+			if (getTeamAtCellPosition_noCheck(temp_xCell, yCell) != teamTypeAtCellPosition) {
+				formsALine = false; // ne forme pas une ligne !
+				break;
+			}
+		}
+		if (formsALine) return true; // une ligne sur l'axe des abscisses
+		
+		formsALine = true;
+		// Vérification de l'axe des ordonnées (Oy)
+		for (int temp_yCell = 0; temp_yCell < gridHeight; temp_yCell++) {
+			// J'ignore la cellule (xCell, yCell)
+			if (temp_yCell == yCell) continue;
+			if (getTeamAtCellPosition_noCheck(xCell, temp_yCell) != teamTypeAtCellPosition) {
+				return false; // ne forme pas une ligne !
+			}
+		}
+		if (formsALine) return true; // une ligne sur l'axe des ordonnées
+		
+		return false; // ne forme pas de ligne en Ox ni en Oy.
+	}
 	
 }

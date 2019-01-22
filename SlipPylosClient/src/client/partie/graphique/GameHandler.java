@@ -473,7 +473,25 @@ public class GameHandler {
 			// --- Poser un pion ---
 			if (essayerDePoserPionIci != null)
 			if (essayerDePoserPionIci.peutPoserIci) { // poser un pion ici
+
+				PylosCell dragCell = GameHandler.jeuActuel.dragCell; // peut être null
 				
+				switch (GameHandler.jeuActuel.volonteJoueur) {
+				case DEPLACER_UN_PION :
+					if (dragCell == null) {
+						System.err.println("ERREUR GRAVE GameHaldler.mouseReleased : volonteJoueur == DEPLACER_UN_PION et dragCell == null.");
+						return;
+					}
+					GameHandler.partieActuelle.deplacerUnPion(equipeJoueur, essayerDePoserPionIci.hauteur, essayerDePoserPionIci.xCell, essayerDePoserPionIci.yCell, dragCell.hauteur, dragCell.xCell, dragCell.yCell);
+					break;
+				case PION_EN_MAIN_DEPUIS_RESERVE :
+					GameHandler.partieActuelle.poseUnPionDeSaReserve(equipeJoueur, essayerDePoserPionIci.hauteur, essayerDePoserPionIci.xCell, essayerDePoserPionIci.yCell);
+					break;
+				default : break;
+				}
+				
+				
+				/* mis dans PylosPartie
 				GameHandler.partieActuelle.setCell(essayerDePoserPionIci.hauteur, essayerDePoserPionIci.xCell, essayerDePoserPionIci.yCell, equipeJoueur);
 				GameHandler.partieActuelle.joueurAJoueUnPion = true;
 				
@@ -492,7 +510,7 @@ public class GameHandler {
 				//GameHandler.partieActuelle.tourSuivant();
 				if (GameHandler.partieActuelle.nbJetonsBlanc == 0 || GameHandler.partieActuelle.nbJetonsNoir == 0) {
 					GameHandler.partieActuelle.tourSuivant();
-				}
+				}*/
 			}
 		}
 		

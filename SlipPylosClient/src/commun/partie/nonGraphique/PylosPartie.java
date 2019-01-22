@@ -1,11 +1,10 @@
 package commun.partie.nonGraphique;
 
-
 public class PylosPartie {
 	
 	public int nbJetonsBlanc = 0;//15;
 	public int nbJetonsNoir = 0;//15;
-	public static final int nbCasesCote = 4; // nombre de cases par coté
+	public static final int nbCasesCote = 3; // nombre de cases par coté
 	private int nbJetonsTotal;
 	public int hauteurMax = nbCasesCote - 1;
 	//public PylosGrid[] a1Grid;
@@ -13,6 +12,7 @@ public class PylosPartie {
 	public TeamType tourDe = TeamType.NOIR;
 	//public IA_v1 ia = new IA_v1(TeamType.NOIR, this);
 	public TeamType equipeJoueur = TeamType.BLANC;
+	public PylosPartieVariante varianteDuJeu = PylosPartieVariante.JOUEURS_AVERTIS;
 	
 	
 	//public boolean joueurAUtiliseSaReserve = false; // 1 utilisation de la réserve de pions par tour, max
@@ -30,7 +30,7 @@ public class PylosPartie {
 	}
 	
 	public PylosPartie(ModeDeJeu arg_modeDeJeu) { // constructeur
-		plateauActuel = new PylosGridArray(nbCasesCote);
+		plateauActuel = new PylosGridArray(nbCasesCote, this);
 		nbJetonsTotal = computeNbJetonsTotal();
 		nbJetonsBlanc = nbJetonsTotal / 2;
 		nbJetonsNoir = nbJetonsTotal / 2;
@@ -53,6 +53,9 @@ public class PylosPartie {
 	}
 	public void setCell(int gridHeight, int xCell, int yCell, TeamType teamType) {
 		plateauActuel.setCell(gridHeight, xCell, yCell, teamType);
+		
+		
+		
 		//a1Grid[gridHeight].setCell(xCell, yCell, teamType);
 	}
 	public PylosGrid getGrid(int hauteur) {
@@ -143,11 +146,88 @@ public class PylosPartie {
 	}
 	
 	private void faireJouerIA() {
-		IA_v0_stupid.joueUnCoup(TeamType.NOIR, this, 4000);
+		//IA_v0_stupid.joueUnCoup(TeamType.NOIR, this, 4000);
+		
+		IA_v4.joueUnCoup(TeamType.NOIR, this, 4);
 		//IA_v4.joueUnCoup(TeamType.NOIR, this, 4);
 		joueurAJoueUnPion = true;
 		// peutReprendrePionsNb = 0; normallement géré par l'IA
 		System.out.println("PylosPartie : faireJouerIA()");
+	}
+	
+	// Poser un pion à partir de sa réserve
+	public boolean poseUnPionDeSaReserve(TeamType equipeQuiFaitAction, int hauteur, int xCell, int yCell) {
+		if (tourDe != equipeQuiFaitAction) return false; // si ce n'est pas à cette équipe de jouer
+		if (joueurAJoueUnPion) return false; // déjà joué ce tour, impossible de rejouer
+		if (plateauActuel.canPlaceAtPosition(hauteur, xCell, yCell) == false) return false; // position invalide, ou pas de cellule en-dessous
+		// Je vérifie le nombre de jetons restant
+		switch (tourDe) {
+		case NOIR :
+			if (nbJetonsNoir <= 0) return false; // pas assez de jetons
+			nbJetonsNoir--;
+			break;
+		case BLANC :
+			if (nbJetonsBlanc <= 0) return false; // pas assez de jetons
+			nbJetonsBlanc--;
+			break;
+		default : break;
+		}
+		// cf l. 136
+		// Ici, la position est valide et j'ai assez de jetons, je peux poser mon pion !
+		// J'ajoute le nouveau pion
+		setCell(hauteur, xCell, yCell, equipeQuiFaitAction);
+		joueurAJoueUnPion = true;
+		boolean doitReprendreDesPions = false;
+		if (plateauActuel.willFormSameColorRectangle(hauteur, xCell, yCell, equipeQuiFaitAction)) {
+			doitReprendreDesPions = true;
+		}
+		if (plateauActuel.willFormSameColorLine(hauteur, xCell, yCell, equipeQuiFaitAction)) {
+			doitReprendreDesPions = true;
+		}
+		if (doitReprendreDesPions) { // Si je pose mon dernier pion et que peux en reprendre :
+			// J'oblige à en reprendre si mon adversaire a encore des pions;
+			// le seul cas où je ne demande pas de reprendre des pions est quand l'adversaire n'a plus de pions
+			if (equipeQuiFaitAction == TeamType.BLANC && nbJetonsNoir == 0) doitReprendreDesPions = false;
+			if (equipeQuiFaitAction == TeamType.NOIR && nbJetonsBlanc == 0) doitReprendreDesPions = false;
+		}
+		if (doitReprendreDesPions) peutReprendrePionsNb = 2;
+		
+		if ((nbJetonsBlanc == 0 || nbJetonsNoir == 0) && peutReprendrePionsNb <= 1) {
+			peutReprendrePionsNb = 0;
+			tourSuivant();
+		}
+		return true;
+	}
+
+	public boolean deplacerUnPion(TeamType equipeQuiFaitAction, int hauteur, int xCell, int yCell, int hauteur_initiale, int xCell_initiale, int yCell_initiale) {
+		if (tourDe != equipeQuiFaitAction) return false; // si ce n'est pas à cette équipe de jouer
+		if (joueurAJoueUnPion) return false; // déjà joué ce tour, impossible de rejouer
+		if (plateauActuel.canPlaceAtPosition(hauteur, xCell, yCell) == false) return false; // position invalide, ou pas de cellule en-dessous
+		boolean peutBougerPion = plateauActuel.canMovePawn(hauteur, xCell, yCell, hauteur_initiale, xCell_initiale, yCell_initiale);
+		if (peutBougerPion == false) return false;
+		// Je supprime l'ancien pion
+		setCell(hauteur_initiale, xCell_initiale, yCell_initiale, TeamType.AUCUNE);
+		// J'ajoute le nouveau pion
+		setCell(hauteur, xCell, yCell, equipeQuiFaitAction);
+		joueurAJoueUnPion = true;
+		if (plateauActuel.willFormSameColorRectangle(hauteur, xCell, yCell, equipeQuiFaitAction)) {
+			peutReprendrePionsNb = 2;
+		}
+		if (plateauActuel.willFormSameColorLine(hauteur, xCell, yCell, equipeQuiFaitAction)) {
+			peutReprendrePionsNb = 2;
+		}
+		if ((nbJetonsBlanc == 0 || nbJetonsNoir == 0) && peutReprendrePionsNb <= 1) {
+			peutReprendrePionsNb = 0;
+			tourSuivant();
+		}
+		return true;
+	}
+	
+	/** Passe le tour automatiquement si c'est possible (TODO)
+	 * @return
+	 */
+	public boolean tourSuivant_automatique() {
+		return false;
 	}
 	
 	

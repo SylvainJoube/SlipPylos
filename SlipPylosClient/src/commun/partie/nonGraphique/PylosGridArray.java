@@ -9,21 +9,20 @@ public class PylosGridArray {
 	
 	public int nbCasesCoteBase;
 	public PylosGrid[] a1Grid; // Grille, hautreur fixée
+	private PylosPartie partieActuelle;
 	
-	/**
-	 * Retourne la hauteur maximale du plateau (commen�ant � 0) soit l'index de la grille la plus haute.
-	 * @return hauteur maximale du plateau. 0 veut dire une seule couche de haut, 1 deux couches de haut etc.
+	/** Retourne la hauteur maximale du plateau (commençant à 0) soit l'index de la grille la plus haute.
+	 *  @return hauteur maximale du plateau. 0 veut dire une seule couche de haut, 1 deux couches de haut etc.
 	 */
 	public int getHauteurMax() {
 		return nbCasesCoteBase - 1;
 	}
 	
-	/**
-	 * Constructeur.
-	 * @param arg_nbCasesCoteBase nombre de cases de côté à la base de la pyramide (nb de cases de c�t� du plateau)
+	/** Constructeur.
+	 *  @param arg_nbCasesCoteBase nombre de cases de côté à la base de la pyramide (nb de cases de c�t� du plateau)
 	 */
-	public PylosGridArray(int arg_nbCasesCoteBase) {
-		this(arg_nbCasesCoteBase, true);
+	public PylosGridArray(int arg_nbCasesCoteBase, PylosPartie arg_partieActuelle) {
+		this(arg_nbCasesCoteBase, true, arg_partieActuelle);
 		/*nbCasesCoteBase = arg_nbCasesCoteBase;
 		a1Grid = new PylosGrid[nbCasesCoteBase];
 		int hauteurMax = getHauteurMax();
@@ -32,13 +31,13 @@ public class PylosGridArray {
 		}*/
 	}
 
-	/**
-	 * Overload du constructeur, pour ne pas initialiser les grilles (c'est inutile dans le cas d'une copie par exemple)
-	 * @param arg_nbCasesCoteBase nombre de cases de la base de la pyramide
-	 * @param initialiseGrids initialiser la grille (true) ou non (false). Le tableau est toujours initialis� � la bonne taille.
+	/** Overload du constructeur, pour ne pas initialiser les grilles (c'est inutile dans le cas d'une copie par exemple)
+	 *  @param arg_nbCasesCoteBase nombre de cases de la base de la pyramide
+	 *  @param initialiseGrids initialiser la grille (true) ou non (false). Le tableau est toujours initialis� � la bonne taille.
 	 */
-	public PylosGridArray(int arg_nbCasesCoteBase, boolean initialiseGrids) {
+	public PylosGridArray(int arg_nbCasesCoteBase, boolean initialiseGrids, PylosPartie arg_partieActuelle) {
 		nbCasesCoteBase = arg_nbCasesCoteBase;
+		partieActuelle = arg_partieActuelle;
 		a1Grid = new PylosGrid[nbCasesCoteBase]; // toujours initialis�
 		if (initialiseGrids) { // seulement cr�er les grilles si besoin
 			int hauteurMax = getHauteurMax();
@@ -48,12 +47,11 @@ public class PylosGridArray {
 		}
 	}
 	
-	/**
-	 * Attribuer une équipe à une cellule donnée.
-	 * @param gridHeight hauteur (= index) de la grille sur laquelle placer la case
-	 * @param xCell position X dans la grille
-	 * @param yCell position Y dans la grille
-	 * @param teamType type de l'équipe à placer ici
+	/** Attribuer une équipe à une cellule donnée.
+	 *  @param gridHeight hauteur (= index) de la grille sur laquelle placer la case
+	 *  @param xCell position X dans la grille
+	 *  @param yCell position Y dans la grille
+	 *  @param teamType type de l'équipe à placer ici
 	 */
 	public void setCell(int gridHeight, int xCell, int yCell, TeamType teamType) {
 		if (gridHeight < 0) {
@@ -68,13 +66,12 @@ public class PylosGridArray {
 		grid.setCell(xCell, yCell, teamType);
 	}
 	
-	/**
-	 * Copie le tableau de grilles, typiquement utile pour l'IA et la simulation des futurs états possibles du jeu.
-	 * Tous les objets sont copiés.
-	 * @return une instance de PylosGridArray identique à celle-ci, tous les objets la consitituant sont copi�s.
+	/** Copie le tableau de grilles, typiquement utile pour l'IA et la simulation des futurs états possibles du jeu.
+	 *  Tous les objets sont copiés.
+	 *  @return une instance de PylosGridArray identique à celle-ci, tous les objets la consitituant sont copi�s.
 	 */
-	public PylosGridArray copy() {
-		PylosGridArray result = new PylosGridArray(nbCasesCoteBase);
+	public PylosGridArray copy(PylosPartie arg_partieActuelle) {
+		PylosGridArray result = new PylosGridArray(nbCasesCoteBase, arg_partieActuelle);
 		for (int haut = 0; haut <= getHauteurMax(); haut++) {
 			result.a1Grid[haut] = this.a1Grid[haut].copy(result);
 		}
@@ -94,6 +91,13 @@ public class PylosGridArray {
 		if (hauteur >= getHauteurMax()) return false;
 		PylosGrid grille = a1Grid[hauteur];
 		return grille.willFormSameColorRectangle(xCell, yCell, teamTypeAtCellPosition);
+	}
+	
+	public boolean willFormSameColorLine(int hauteur, int xCell, int yCell, TeamType teamTypeAtCellPosition) {
+		if (hauteur < 0) return false;
+		if (hauteur >= getHauteurMax() - 1) return false; // seuls les lignes de 3+ de long sont valides (exit dernière hauteur et avant-dernière) (Pylos classique : 3 et 4 valides)
+		PylosGrid grille = a1Grid[hauteur];
+		return grille.willFormSameColorLine(xCell, yCell, teamTypeAtCellPosition);
 	}
 	
 	
@@ -180,5 +184,13 @@ public class PylosGridArray {
 		return true;
 	}
 	
+	
+	// Retourne true si la hauteur est valide, que la case est libre et qu'il y a 4 boules au-dessous
+	public boolean canPlaceAtPosition(int hauteur, int xCell, int yCell) {
+		if (hauteur < 0) return false; // trop bas
+		if (hauteur >= a1Grid.length) return false; // trop haut
+		PylosGrid grid = a1Grid[hauteur];
+		return grid.canPlaceAtPosition(xCell, yCell);
+	}
 	
 }

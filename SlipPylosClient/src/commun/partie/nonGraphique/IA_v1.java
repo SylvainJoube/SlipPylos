@@ -14,12 +14,12 @@ class IA_v1_recur {
 	
 	
 	
-	public IA_v1_recur(TeamType arg_equipeQueJeDoisAider, TeamType arg_equipeQuiJoueCeTour, int arg_nbPionsBlanc, int arg_nbPionsNoir, PylosGridArray ancienPlateauACopier) {
+	public IA_v1_recur(TeamType arg_equipeQueJeDoisAider, TeamType arg_equipeQuiJoueCeTour, int arg_nbPionsBlanc, int arg_nbPionsNoir, PylosGridArray ancienPlateauACopier, PylosPartie arg_partie) {
 		equipeQueJeDoisAider = arg_equipeQueJeDoisAider;
 		equipeQuiJoueCeTour = arg_equipeQuiJoueCeTour;
 		nbPionsBlanc = arg_nbPionsBlanc;
 		nbPionsNoir = arg_nbPionsNoir;
-		plateauActuel = ancienPlateauACopier.copy();
+		plateauActuel = ancienPlateauACopier.copy(arg_partie);
 	}
 	public IA_v1_recur(IA_v1_recur iaTourPrecedent) {
 		if (iaTourPrecedent.equipeQuiJoueCeTour == TeamType.NOIR) equipeQuiJoueCeTour = TeamType.BLANC;
@@ -251,7 +251,7 @@ public class IA_v1 {
 	}
 	
 	public static void joueUnCoup(TeamType equipe, PylosPartie partie, int profondeurDeRechercheMax) {
-		IA_v1_recur ia_v1_recur = new IA_v1_recur(equipe, equipe, partie.nbJetonsBlanc, partie.nbJetonsNoir, partie.plateauActuel.copy());
+		IA_v1_recur ia_v1_recur = new IA_v1_recur(equipe, equipe, partie.nbJetonsBlanc, partie.nbJetonsNoir, partie.plateauActuel.copy(partie), partie);
 		ia_v1_recur.computeMaxScore(profondeurDeRechercheMax, true);
 		partie.plateauActuel = ia_v1_recur.plateauActuel; // switch du plateau
 		partie.nbJetonsBlanc = ia_v1_recur.nbPionsBlanc;

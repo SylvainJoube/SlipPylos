@@ -1,7 +1,12 @@
 package slip.network.tcp;
 
+import java.net.InetAddress;
+import java.net.NetworkInterface;
 import java.net.ServerSocket;
+import java.net.SocketException;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Enumeration;
 
 import slip.network.buffers.NetBuffer;
 
@@ -20,7 +25,8 @@ public class TCPServer {
 	private ArrayList<TCPClient> clientList_notYetAccepted = new ArrayList<TCPClient>(); // Liste des clients connectés mais non explicitement acceptés
 	private ArrayList<TCPClient> clientList_accepted = new ArrayList<TCPClient>(); // Liste des clients acceptés via TCPServer.acceptNewClient()
 	
-	private TCPServerAcceptThread acceptThread;
+	private TCPServerAcceptThread acceptThread = null;
+	private static String currentLocalHostAddress = null; // nom hôte local actuel (pour ne pas avoir à le retrouver à chaque fois) (exemple : 192.168.0.54)
 	
 	/** Ecriture d'un message d'information (log)
 	 * Formatté en "date + message"
@@ -134,6 +140,88 @@ public class TCPServer {
 			//System.out.println("Ajout d'un cient au serveur !");
 		}
 	}
+	
+	/** Demande du numéro de port d'écoute du serveur
+	 *  @return 0 si le serveur n'écoute pas, le numéro de port si le serveur est lancé et peut accepter de nouveaux clients.
+	 */
+	public int getListeningPort() {
+		if (isListening() == false) return 0;
+		return listenOnPort;
+	}
+	
+	/*public String getLocalHostAddress() {
+		NetworkInterface.getNetworkInterfaces();
+		for (NetworkInterface iInterface : ) {
+			
+		}
+	}*/
+	
+	/** Récupère l'hôte local asscié à cet ordinateur. (exemple : 192.168.0.65)
+	 * @param forceRefresh forcer l'actualisation du nom d'hôte
+	 * @return null si erreur, ou une String du type 192.168.0.65
+	 */
+	public static String getLocalHostAddress(boolean forceRefresh) {
+		if (currentLocalHostAddress == null || forceRefresh) {
+			InetAddress addr;
+			try {
+				addr = InetAddress.getLocalHost();
+				currentLocalHostAddress = addr.getHostAddress();
+			} catch (UnknownHostException e) {
+				//e.printStackTrace();
+				currentLocalHostAddress = null;
+			}
+		}
+		return currentLocalHostAddress;
+	}
+	
+	/** Même que getLocalHostAddress() mais retourne "" en cas d'erreur, et non null.
+	 *  @param forceRefresh  forcer l'actualisation du nom d'hôte
+	 *  @return  "" si erreur, ou une String du type 192.168.0.65
+	 */
+	public static String getLocalHostAddress_noNull(boolean forceRefresh) {
+		String result = getLocalHostAddress(forceRefresh);
+		if (result == null) {
+			result = "";
+		}
+		return result;
+	}
+	
+	/*public static String getIPV4() {
+		
+		try {
+			InetAddress addr = InetAddress.getLocalHost();
+
+			System.out.println("addresse getHostAddress : " + addr.getHostAddress());
+			System.out.println("addresse getHostName : " + addr.getHostName());
+			
+			
+			return "";
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return null;
+		/*
+		if (false == true)
+	    try {
+	        Enumeration<NetworkInterface> net = NetworkInterface.getNetworkInterfaces();
+	        while (net.hasMoreElements()) {
+	            NetworkInterface networkInterface = net.nextElement();
+	            Enumeration<InetAddress> add = networkInterface.getInetAddresses();
+	            while (add.hasMoreElements()) {
+	                InetAddress a = add.nextElement();
+	                System.out.println("addresse n : " + a.getHostAddress());
+	                
+	                if (!a.isLoopbackAddress() && !a.getHostAddress().contains(":")) {
+	                        System.out.println("getIPV4 : " + a.getHostAddress());
+	                    return a.getHostAddress();
+	                }
+	            }
+	        }
+	    } catch (SocketException e) {
+	        e.printStackTrace();
+	    }
+	    return null;* /
+	}*/
 	
 	
 	

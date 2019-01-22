@@ -61,7 +61,7 @@ public class IA_v4 {
 		if (playForReal) {
 			nbPionsBlanc = partie.nbJetonsBlanc;
 			nbPionsNoir = partie.nbJetonsNoir;
-			plateauActuel = partie.plateauActuel.copy(); // pour ne pas emb�ter l'affichage graphique
+			plateauActuel = partie.plateauActuel.copy(partie); // pour ne pas emb�ter l'affichage graphique
 		} else {
 			// c'est déjà initialisé
 		}

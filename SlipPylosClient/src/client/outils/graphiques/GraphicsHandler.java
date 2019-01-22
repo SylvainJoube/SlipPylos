@@ -30,6 +30,7 @@ import client.partie.graphique.LogWriter;
 import client.partie.graphique.RessourceManager;
 import client.partie.graphique.RoomType;
 import client.room1.Room1Handler;
+import client.roomReseauLocalAttente.RoomReseauLocalAttenteHandler;
 //import commun.partie.nonGraphique.PylosPartie;
 import commun.partie.nonGraphique.ModeDeJeu;
 
@@ -97,12 +98,16 @@ public class GraphicsHandler extends Canvas {
 	}
 	
 	JTextField exempleTextField = new JTextField("--> Nouveau texte à modifier <--");
+	JPasswordField exempleTextField4 = new JPasswordField("--> Nouveau texte à modifier <--");
 	
 	//JTextField myJt;
+	
+	private static JPanel applicationPanel;
 	
 	public void initWindow() {
 		JFrame container = new JFrame("Jeu de pylos en java");
 		JPanel panel = (JPanel) container.getContentPane(); // get hold the content of the frame and set up the resolution of the game
+		applicationPanel = panel;
 		panel.setPreferredSize(new Dimension(windowWidth, windowHeight));
 		
 		
@@ -116,10 +121,15 @@ public class GraphicsHandler extends Canvas {
 		exempleTextField.setBorder(null);
 		Font ft = exempleTextField.getFont();
 		
-		
+		RoomReseauLocalAttenteHandler.addOnceToPanel(panel);
+		RoomReseauLocalAttenteHandler.setVisibleFields(true);
 		//exempleTextField.setFont();
-		exempleTextField.setBounds(500, 100, 300, 30);
+		/*exempleTextField.setBounds(500, 100, 300, 30);
+		exempleTextField4.setBounds(300, 200, 300, 30);
 		panel.add(exempleTextField);
+		panel.add(exempleTextField4);
+		exempleTextField.setVisible(false);
+		exempleTextField4.setVisible(false);*/
 		
 		panel.add(this);
 		setIgnoreRepaint(false); // Tell AWT not to bother repainting our canvas since we're going to do that ourself in accelerated mode
@@ -149,6 +159,7 @@ public class GraphicsHandler extends Canvas {
 		ginstance.addMouseListener(new GenericMouseListener());
 		ginstance.addMouseMotionListener(new GenericMouseMotionListener());
 	}
+	
 	
 	public void loop() {
 		long lastLoopTime = System.currentTimeMillis();
@@ -185,6 +196,14 @@ public class GraphicsHandler extends Canvas {
 				// surtout pas de Listeners.clearEvents(); c'est refreshFrameListenerEvents() qui s'en charge !
 				// seulement pour GameHandler : Listeners.frame_clearMouseSate();
 			}
+
+			if (currentRoomType == RoomType.MENU_RESEAU_LOCAL) {
+				Listeners.refreshFrameListenerEvents(); // pour faire la détection des collisions en même temps que l'affichage graphique
+				RoomReseauLocalAttenteHandler.staticLoop();
+				drawReturnButton(); // l'état de la souris est utile pour 
+				// surtout pas de Listeners.clearEvents(); c'est refreshFrameListenerEvents() qui s'en charge !
+				// seulement pour GameHandler : Listeners.frame_clearMouseSate();
+			}
 			
 			//myJt.repaint();
 			//myJt.paint(currentGraphics);
@@ -206,6 +225,13 @@ public class GraphicsHandler extends Canvas {
 	
 	public static void roomGoTo_game(ModeDeJeu modeDeJeu) {
 		Listeners.clearEvents();
+		RoomReseauLocalAttenteHandler.setVisibleFields(false);
+		// stopper le serveur local si :
+		if (  (modeDeJeu != ModeDeJeu.RESEAU_LOCAL) // la partie suivante n'est pas en local
+		   || (modeDeJeu == ModeDeJeu.RESEAU_LOCAL && RoomReseauLocalAttenteHandler.estLeServeur == false)) { // la partie est en réseau local mais je ne suis pas le serveur
+				RoomReseauLocalAttenteHandler.stopLocalServer(); // stopper le serveur local
+		}
+		
 		currentRoomType = RoomType.PARTIE;
 		//GameHandler game = 
 		new GameHandler(modeDeJeu);
@@ -213,9 +239,18 @@ public class GraphicsHandler extends Canvas {
 	
 	public static void roomGoTo_menuChoixTypePartie() {
 		Listeners.clearEvents();
+		RoomReseauLocalAttenteHandler.setVisibleFields(false);
+		RoomReseauLocalAttenteHandler.stopLocalServer();
 		currentRoomType = RoomType.MENU_CHOIX_TYPE_PARTIE;
 		//Room1Handler room1Handler = 
 		new Room1Handler();
+	}
+	
+	public static void roomGoTo_menuReseauLocal() {
+		Listeners.clearEvents();
+		currentRoomType = RoomType.MENU_RESEAU_LOCAL;
+		RoomReseauLocalAttenteHandler.setVisibleFields(true);
+		RoomReseauLocalAttenteHandler.startLocalServer();
 	}
 	
 	public static void drawReturnButton() {
@@ -244,6 +279,7 @@ public class GraphicsHandler extends Canvas {
 			switch (currentRoomType) {
 			case MENU_CHOIX_TYPE_PARTIE : break;
 			case PARTIE : roomGoTo_menuChoixTypePartie(); break;
+			case MENU_RESEAU_LOCAL : roomGoTo_menuChoixTypePartie(); break;
 			}
 		}
 		//
