@@ -31,10 +31,9 @@ public class Listeners {
 	private static AtomicBoolean canAccessToMouseEventList = new AtomicBoolean(true);
 	private static Object mouseEventList_lock = new Object();
 	
-	static private Listeners mainListener = new Listeners(); // le code de la création sera exécuté donc une fois
+	//static private Listeners mainListener = new Listeners(); // le code de la création sera exécuté donc une fois
 	
 	// Pour la gestion image à image :
-	
 	
 	static private boolean mousePressedThisFrame = false;
 	static private boolean mouseReleasedThisFrame = false;
@@ -78,6 +77,7 @@ public class Listeners {
 		// Pas d'utilisation de canAccessToMouseEventList en vérification : le code doit être exécuté immédiatement
 		synchronized(mouseEventList_lock) {
 			mouseEventList.clear();
+			frame_clearMouseSate();
 		}
 	}
 	

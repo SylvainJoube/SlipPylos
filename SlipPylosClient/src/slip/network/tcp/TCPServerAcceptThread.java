@@ -14,6 +14,7 @@ public class TCPServerAcceptThread implements Runnable {
 	
 	private TCPServer myServer;
 	AtomicBoolean stillActive = new AtomicBoolean(true); // false lorsque le thread s'arrête de lui-même
+	//private boolean allowAcceptNewClients = true;
 	
 	public TCPServerAcceptThread(TCPServer arg_myServer) {
 		myServer = arg_myServer;
@@ -54,7 +55,7 @@ public class TCPServerAcceptThread implements Runnable {
 			ServerSocket servSock = myServer.getServSock();
 			try {
 				Socket clientSock = servSock.accept();
-				TCPClient newClient = new TCPClient(clientSock);
+				TCPClient newClient = new TCPClient(clientSock, true);
 				myServer.addClientFromAcceptThread(newClient);
 			} catch (Exception e) {
 				stillActive.set(false);

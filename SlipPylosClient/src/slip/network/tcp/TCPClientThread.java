@@ -189,7 +189,7 @@ public class TCPClientThread implements Runnable {
 			InetAddress hostAddress = null;
 			try {
 				hostAddress = InetAddress.getByName(connectToHost);
-			} catch (UnknownHostException hostExcept) {
+			} catch (Exception hostExcept) { // UnknownHostException
 				stillActive.set(false);
 				criticalErrorMessage = "Impossible de résoudre le nom de domaine. connectToHost(" + connectToHost + ")" + hostExcept.getMessage();
 				criticalErrorOccured.set(true);
@@ -199,7 +199,7 @@ public class TCPClientThread implements Runnable {
 			
 			try {
 				mySocket = new Socket(hostAddress, connectToPort);
-			} catch (IOException sockIOException) {
+			} catch (Exception sockIOException) {
 				stillActive.set(false);
 				criticalErrorMessage = "Impossible d'ouvrir le socket à l'adresse connectToHost(" + connectToHost + ") " + "connectToPort(" + connectToPort + ")" + sockIOException.getMessage();
 				criticalErrorOccured.set(true);
@@ -227,7 +227,17 @@ public class TCPClientThread implements Runnable {
 		isConnected.set(true); // bien connecté
 		//System.out
 		
+		/*
+		System.out.println("TCPClientThread.run : au dodo !");
+		try {
+			Thread.sleep(4000);
+		} catch (Exception e) {
+			
+		}
+		System.out.println("TCPClientThread.run : dodo terminé !");*/
 		
+		
+		long iBoucle = 0;
 		while (stillActive.get()) {
 			
 			if (myClient == null) {
@@ -282,15 +292,19 @@ public class TCPClientThread implements Runnable {
 						dataNotYetInBuffer = newBuffer;
 					}
 					while (checkForCompleteMessage()); // Ajout de tous les messages reçus au TCPClient
+				} else /*if (bytesReceived <= 0) */ {
+					try { Thread.sleep(2); } catch (Exception e) { }
 				}
-				
-			} catch (IOException e) {
+				//System.out.println("TCPClientThread.run : bytesReceived =  " + bytesReceived);
+			} catch (Exception e) { // IOException
 				stillActive.set(false);
 				criticalErrorMessage = "Exception " + e.getMessage();
 				criticalErrorOccured.set(true);
 				tryCloseSocket();
 				//e.printStackTrace();
 			}
+			//System.out.println("TCPClientThread.run : still active, boucle " + iBoucle + " mySocket.isClosed=" + mySocket.isClosed() + " mySocket.isConnected=" + mySocket.isConnected());
+			iBoucle++;
 		}
 		
 		tryCloseSocket();
@@ -322,7 +336,7 @@ public class TCPClientThread implements Runnable {
 				OutputStream mySocketOutStream = mySocket.getOutputStream();
 				mySocketOutStream.write(buffToSend);
 				//System.out.println("TCPClientThread.addMessageToSendList() : OK ! Message bien envoyé.");
-			} catch (IOException e) {
+			} catch (Exception e) { // IOException
 				return false; // si le socket n'est pas encore connecté
 				//e.printStackTrace();
 			}
@@ -335,9 +349,7 @@ public class TCPClientThread implements Runnable {
 			if (mySocket != null) {
 				try {
 					mySocket.close();
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-				}
+				} catch (Exception e) {	} // réessayer de fermer le socket sur exception, fait plus tard quand j'aurai le temps !
 				mySocket = null;
 			}
 		}

@@ -241,12 +241,48 @@ public class NetBuffer { // fonctionnement synchrone, non thread-safe
 		return packetBuffer;
 	}
 	
+	/** Sécurité : vérifier que le buffer de réception est assez gros pour lire les octets restants
+	 * @param posInBuffer
+	 * @param needToReadSize
+	 * @return
+	 */
+	private boolean bufferIsTooSmall(int posInBuffer, int needToReadSize) {
+		int totalBufferSize = receivedRawData.length;
+		if (posInBuffer + needToReadSize > totalBufferSize) { // plus assez d'espace
+			System.err.println("ERREUR GRAVE NetBuffer.bufferIsTooSmall : receivedRawData.length("+receivedRawData.length+") < posInBuffer + needToReadSize ("+(posInBuffer + needToReadSize)+")");
+			return false;
+		}
+		return true;
+	}
+	/** Erreur critique : supprimer les données du NetBuffer
+	 */
+	private void clearRawDataOnCriticalError() {
+		dataList.clear();
+		currentReadPos = 0;
+		receivedRawData = null;
+	}
+	
+	/** Sécurité : vérifier que le buffer de réception est assez gros pour lire les octets restants
+	 * @param posInBuffer
+	 * @param needToReadSize
+	 * @return
+	 */
+	private boolean checkCriticalReadSizeError(int posInBuffer, int needToReadSize) {
+		if (bufferIsTooSmall(posInBuffer, needToReadSize)) {
+			clearRawDataOnCriticalError();
+			return true;
+		}
+		return false;
+	}
+	
+	/** Lire le buffer depuis un tableau d'octets, buffer précédemment encodé via NetBuffer.convertToByteArray()
+	 */
 	public void readFromReceivedRawData() {
 		dataList.clear();
 		currentReadPos = 0;
 		
 		if (receivedRawData == null) return;
-		
+		if (checkCriticalReadSizeError(0, 4)) return; // <- erreur critique, taille du buffer insuffisante
 		byte[] bufferSizeAsByteArray = new byte[4];
 		System.arraycopy(receivedRawData, 0, bufferSizeAsByteArray, 0, 4);
 		int totalDataBufferSize = NetBufferData.byteArrayToInt(bufferSizeAsByteArray);
@@ -269,6 +305,7 @@ public class NetBuffer { // fonctionnement synchrone, non thread-safe
 			switch (dataType) {
 			
 			case INTEGER :
+				if (checkCriticalReadSizeError(currentPosInRawDataBuffer, 4)) return; // <- erreur critique, taille du buffer insuffisante
 				byte[] intByteArray = new byte[4];
 				System.arraycopy(receivedRawData, currentPosInRawDataBuffer, intByteArray, 0, 4);
 				currentPosInRawDataBuffer += 4;
@@ -278,6 +315,7 @@ public class NetBuffer { // fonctionnement synchrone, non thread-safe
 				break;
 				
 			case DOUBLE :
+				if (checkCriticalReadSizeError(currentPosInRawDataBuffer, 8)) return; // <- erreur critique, taille du buffer insuffisante
 				byte[] doubleByteArray = new byte[8];
 				System.arraycopy(receivedRawData, currentPosInRawDataBuffer, doubleByteArray, 0, 8);
 				currentPosInRawDataBuffer += 8;
@@ -287,10 +325,12 @@ public class NetBuffer { // fonctionnement synchrone, non thread-safe
 				break;
 			
 			case STRING :
+				if (checkCriticalReadSizeError(currentPosInRawDataBuffer, 4)) return; // <- erreur critique, taille du buffer insuffisante
 				byte[] stringSizeByteArray = new byte[4];
 				System.arraycopy(receivedRawData, currentPosInRawDataBuffer, stringSizeByteArray, 0, 4);
 				currentPosInRawDataBuffer += 4;
 				int stringSize = NetBufferData.byteArrayToInt(stringSizeByteArray);
+				if (checkCriticalReadSizeError(currentPosInRawDataBuffer, stringSize)) return; // <- erreur critique, taille du buffer insuffisante
 				byte[] stringAsByteArray = new byte[stringSize];
 				System.arraycopy(receivedRawData, currentPosInRawDataBuffer, stringAsByteArray, 0, stringSize);
 				currentPosInRawDataBuffer += stringSize;
@@ -300,10 +340,12 @@ public class NetBuffer { // fonctionnement synchrone, non thread-safe
 				break;
 			
 			case BYTE_ARRAY :
+				if (checkCriticalReadSizeError(currentPosInRawDataBuffer, 4)) return; // <- erreur critique, taille du buffer insuffisante
 				byte[] byteArraySizeByteArray = new byte[4];
 				System.arraycopy(receivedRawData, currentPosInRawDataBuffer, byteArraySizeByteArray, 0, 4);
 				currentPosInRawDataBuffer += 4;
 				int byteArraySize = NetBufferData.byteArrayToInt(byteArraySizeByteArray);
+				if (checkCriticalReadSizeError(currentPosInRawDataBuffer, byteArraySize)) return; // <- erreur critique, taille du buffer insuffisante
 				byte[] byteArrayValue = new byte[byteArraySize];
 				System.arraycopy(receivedRawData, currentPosInRawDataBuffer, byteArrayValue, 0, byteArraySize);
 				currentPosInRawDataBuffer += byteArraySize;
@@ -312,6 +354,7 @@ public class NetBuffer { // fonctionnement synchrone, non thread-safe
 				break;
 
 			case BOOLEAN :
+				if (checkCriticalReadSizeError(currentPosInRawDataBuffer, 1)) return; // <- erreur critique, taille du buffer insuffisante
 				byte booleanAsByteValue = receivedRawData[currentPosInRawDataBuffer];
 				currentPosInRawDataBuffer++;
 				boolean booleanValue = (booleanAsByteValue == 1);
@@ -320,6 +363,7 @@ public class NetBuffer { // fonctionnement synchrone, non thread-safe
 				break;
 				
 			case LONG :
+				if (checkCriticalReadSizeError(currentPosInRawDataBuffer, 8)) return; // <- erreur critique, taille du buffer insuffisante
 				byte[] longByteArray = new byte[8];
 				System.arraycopy(receivedRawData, currentPosInRawDataBuffer, longByteArray, 0, 8);
 				currentPosInRawDataBuffer += 8;

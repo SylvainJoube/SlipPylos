@@ -86,14 +86,31 @@ public class Room1Handler {
 		
 		//loadImages();
 
-		int xMouse = Listeners.frame_getMouseX();
-		int yMouse = Listeners.frame_getMouseY();
+		//int xMouse = Listeners.frame_getMouseX();
+		//int yMouse = Listeners.frame_getMouseY();
 		
-		int mouseOverButtonIndex = -1;
-		Room1Button mouseOverButton = null;
-		int defaultPosOffset = 3;
+		//int mouseOverButtonIndex = -1;
+		//Room1Button mouseOverButton = null;
+		//int defaultPosOffset = 3;
 		for (int iButton = 0; iButton < buttonList.size(); iButton++) {
 			Room1Button button = buttonList.get(iButton);
+			
+			boolean mouseRealeasedOnButton = PImage.checkImageAsButton(true, currentGraphics, button.displayImage, button.x, button.y, true, 3);
+			if (mouseRealeasedOnButton) {
+				switch (iButton) {
+				case 0 :
+					GraphicsHandler.roomGoTo_game(ModeDeJeu.SOLO_LOCAL);
+					break;
+				case 1 : 
+					GraphicsHandler.roomGoTo_game(ModeDeJeu.HOT_SEAT);
+					break;
+				case 2 : 
+					GraphicsHandler.roomGoTo_menuReseauLocal();
+					break;
+				}
+			}
+		}
+			/*
 			int posOffset = 0;
 			BoxPosition box = new BoxPosition(button.x, button.y, button.x + buttonWidth, button.y + buttonHeight);
 			if (box.isInside(xMouse,  yMouse)) { // souris
@@ -120,12 +137,12 @@ public class Room1Handler {
 				PImage.drawImageColorAlpha(currentGraphics, button.displayImage, button.x, button.y, colorIntensity, colorIntensity, colorIntensity, 1);
 			}
 			PImage.drawImageAlpha(currentGraphics, button.displayImage, button.x - posOffset, button.y - posOffset, 1);
-		}
-		time += 0.2;
+		}*/
+		/*time += 0.2;
 		if (mouseOverButton != null) {
 			double imgAlpha = ((Math.cos(time) + 1) / 2) * 0.2 + 0.2;
 			PImage.drawImageAlpha(currentGraphics, spr_MenuSelectionJeu_bright, mouseOverButton.x - defaultPosOffset, mouseOverButton.y - defaultPosOffset, imgAlpha);
-		}
+		}*/
 		 
 		//PImage.drawImageAlpha(currentGraphics, spr_MenuSelectionJeu_solo, 10, 10, 1);
 		//time = time % 2 * Math.PI;

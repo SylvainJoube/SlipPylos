@@ -27,6 +27,7 @@ public class TCPClient {
 	// de la vérification des nouveaux messages : l'AtomicBoolean permet de ne pas attendre d'obtenir le lock via synchronized(...)
 	private AtomicBoolean canAccessReadyBufferList = new AtomicBoolean(true); // Un booléen atomique donc thread-safe
 	private String remoteIP = "";
+	private int remotePort = 0;
 	
 	
 	/** Constructeur par défaut, sans tenter de se connecter ni créer de thread de réception */
@@ -38,7 +39,7 @@ public class TCPClient {
 	public TCPClient(String hostIp, int hostPort) {
 		connect(hostIp, hostPort);
 	}
-	
+
 	/** Résoudre l'IP distante du client
 	 *  @return IP distante du client
 	 */
@@ -46,14 +47,27 @@ public class TCPClient {
 		return remoteIP;
 	}
 	
+	/** Résoudre le port  distant du client
+	 *  @return port distant du client
+	 */
+	public int getRemotePort() {
+		return remotePort;
+	}
+	
 	/** Constructeur à partir d'un socket fonctionnel
 	 * -> surtout utilisé lors de l'acceptation d'un nouveau client par un TCPServer
 	 * @param workingSocket socket connecté à un hôte distant
 	 */
-	public TCPClient(Socket workingSocket) {
+	public TCPClient(Socket workingSocket, boolean createdFromServer) {
 		if (workingSocket != null) { // résolution de l'adresse
 			InetAddress sockAddr = workingSocket.getInetAddress();
 			remoteIP = sockAddr.getHostAddress();
+			if (createdFromServer)
+				remotePort = workingSocket.getLocalPort(); // probablement accepté d'un serveur, donc il s'agit ici du port local et non du port distant du client
+			else
+				remotePort = workingSocket.getPort(); // port distant (moins utilie)
+			//System.out.println("TCPClient constructeur : workingSocket.getPort()="+workingSocket.getPort()+" workingSocket.getLocalPort()="+workingSocket.getLocalPort());
+			if (remoteIP == null) remoteIP = "";
 		}
 		myThread = new TCPClientThread(this, workingSocket, false); // thread de réception
 		new Thread(myThread).start();
@@ -67,6 +81,7 @@ public class TCPClient {
 	public void connect(String hostIp, int hostPort) {
 		if (myThread != null) return; // impossible de lancer 2+ fois connect()
 		remoteIP = hostIp;
+		remotePort = hostPort;
 		myThread = new TCPClientThread(this, hostIp, hostPort, false);
 		new Thread(myThread).start();
 	}
@@ -196,14 +211,12 @@ public class TCPClient {
 	}
 	
 	/** Arrêter ce TCPClient et son thread.
-	 * Le thread est automatiquement arrêté si la connexion à l'hôte est perdue.
+	 *  à noter : Le thread est automatiquement arrêté si la connexion à l'hôte est perdue.
 	 */
 	public void stop() {
 		if (myThread != null)
 			myThread.stop();
-		// TODO
 	}
-	
 	
 	
 }

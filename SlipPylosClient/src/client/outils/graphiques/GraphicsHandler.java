@@ -187,7 +187,7 @@ public class GraphicsHandler extends Canvas {
 			if (currentRoomType == RoomType.PARTIE) {
 				GameHandler.staticGameLoop();
 				drawReturnButton(); // l'état de la souris est utile pour 
-				Listeners.frame_clearMouseSate();
+				Listeners.frame_clearMouseSate(); // ne supprime pas les évènements, réinitialise juste l'état de la souris pour la frame suivante
 				// pas de Listeners.clearEvents(); ici, c'est GameHandler qui s'en charge !
 			}
 			if (currentRoomType == RoomType.MENU_CHOIX_TYPE_PARTIE) {
@@ -217,7 +217,7 @@ public class GraphicsHandler extends Canvas {
 			// finally pause for a bit. Note: this should run us at about
 			// 100 fps but on windows this might vary each loop due to
 			// a bad implementation of timer
-			try { Thread.sleep(16); } catch (Exception e) {}
+			try { Thread.sleep(16); } catch (Exception e) { }
 			
 			
 		}
