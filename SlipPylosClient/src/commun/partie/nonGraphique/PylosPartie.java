@@ -5,7 +5,7 @@ public class PylosPartie {
 	
 	public int nbJetonsBlanc = 0;//15;
 	public int nbJetonsNoir = 0;//15;
-	public static final int nbCasesCote = 3; // nombre de cases par coté
+	public static final int nbCasesCote = 4; // nombre de cases par coté
 	private int nbJetonsTotal;
 	public int hauteurMax = nbCasesCote - 1;
 	//public PylosGrid[] a1Grid;
