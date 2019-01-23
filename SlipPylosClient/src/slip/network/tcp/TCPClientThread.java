@@ -150,7 +150,7 @@ public class TCPClientThread implements Runnable {
 			if (dataNotYetInBuffer.length < messageSize + 4)
 				return false; // message non entièrement reçu
 			// Je reçois le message
-			NetBuffer messageBuffer = new NetBuffer(dataNotYetInBuffer, 4, messageSize);
+			NetBuffer messageBuffer = new NetBuffer(dataNotYetInBuffer, 0, messageSize + 4); // le NetBuffer a sa taille en début de buffer
 			// Je supprime du tableau dataNotYetInBuffer le message que je viens de recevoir
 			removeFirstBytesOfRCVBuffer(messageSize + 4);
 			/*
@@ -237,7 +237,7 @@ public class TCPClientThread implements Runnable {
 		System.out.println("TCPClientThread.run : dodo terminé !");*/
 		
 		
-		long iBoucle = 0;
+		//long iBoucle = 0;
 		while (stillActive.get()) {
 			
 			if (myClient == null) {
@@ -295,6 +295,14 @@ public class TCPClientThread implements Runnable {
 				} else /*if (bytesReceived <= 0) */ {
 					try { Thread.sleep(2); } catch (Exception e) { }
 				}
+				if (bytesReceived == -1) {
+					stillActive.set(false);
+					//System.out.println("TCPClientThread.run : bytesReceived =  " + bytesReceived);
+					criticalErrorMessage = "déconnexion, bytesReceived == -1"; // fin de la connexion (suite à un Socket.close()) /!\ Socket.close() laisse Socket.isConnected() à true s'il y a déjà et connexion. D'où l'utilisation de -1 pour signifier "end of stream"
+					criticalErrorOccured.set(true);
+					tryCloseSocket();
+					return;
+				}
 				//System.out.println("TCPClientThread.run : bytesReceived =  " + bytesReceived);
 			} catch (Exception e) { // IOException
 				stillActive.set(false);
@@ -304,7 +312,7 @@ public class TCPClientThread implements Runnable {
 				//e.printStackTrace();
 			}
 			//System.out.println("TCPClientThread.run : still active, boucle " + iBoucle + " mySocket.isClosed=" + mySocket.isClosed() + " mySocket.isConnected=" + mySocket.isConnected());
-			iBoucle++;
+			//iBoucle++;
 		}
 		
 		tryCloseSocket();
@@ -333,6 +341,7 @@ public class TCPClientThread implements Runnable {
 			try {
 				//System.out.println("TCPClientThread.addMessageToSendList()");
 				byte[] buffToSend = message.convertToByteArray();
+				
 				OutputStream mySocketOutStream = mySocket.getOutputStream();
 				mySocketOutStream.write(buffToSend);
 				//System.out.println("TCPClientThread.addMessageToSendList() : OK ! Message bien envoyé.");

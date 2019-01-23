@@ -33,6 +33,7 @@ import client.room1.Room1Handler;
 import client.roomReseauLocalAttente.RoomReseauLocalAttenteHandler;
 //import commun.partie.nonGraphique.PylosPartie;
 import commun.partie.nonGraphique.ModeDeJeu;
+import commun.partie.nonGraphique.TeamType;
 
 
 class AsynchronousBu implements Runnable {
@@ -223,7 +224,7 @@ public class GraphicsHandler extends Canvas {
 		}
 	}
 	
-	public static void roomGoTo_game(ModeDeJeu modeDeJeu) {
+	public static void roomGoTo_game(ModeDeJeu modeDeJeu, TeamType cEstLeTourDe, TeamType equipeJoueurActuel) {
 		Listeners.clearEvents();
 		RoomReseauLocalAttenteHandler.setVisibleFields(false);
 		// stopper le serveur local si :
@@ -234,13 +235,14 @@ public class GraphicsHandler extends Canvas {
 		
 		currentRoomType = RoomType.PARTIE;
 		//GameHandler game = 
-		new GameHandler(modeDeJeu);
+		new GameHandler(modeDeJeu, cEstLeTourDe, equipeJoueurActuel);
 	}
 	
 	public static void roomGoTo_menuChoixTypePartie() {
 		Listeners.clearEvents();
 		RoomReseauLocalAttenteHandler.setVisibleFields(false);
 		RoomReseauLocalAttenteHandler.stopLocalServer();
+		RoomReseauLocalAttenteHandler.closeAutreJoueurLocalTCPClient();
 		currentRoomType = RoomType.MENU_CHOIX_TYPE_PARTIE;
 		//Room1Handler room1Handler = 
 		new Room1Handler();
@@ -248,6 +250,8 @@ public class GraphicsHandler extends Canvas {
 	
 	public static void roomGoTo_menuReseauLocal() {
 		Listeners.clearEvents();
+		RoomReseauLocalAttenteHandler.stopLocalServer();
+		RoomReseauLocalAttenteHandler.closeAutreJoueurLocalTCPClient();
 		currentRoomType = RoomType.MENU_RESEAU_LOCAL;
 		RoomReseauLocalAttenteHandler.setVisibleFields(true);
 		RoomReseauLocalAttenteHandler.startLocalServer();

@@ -250,9 +250,9 @@ public class NetBuffer { // fonctionnement synchrone, non thread-safe
 		int totalBufferSize = receivedRawData.length;
 		if (posInBuffer + needToReadSize > totalBufferSize) { // plus assez d'espace
 			System.err.println("ERREUR GRAVE NetBuffer.bufferIsTooSmall : receivedRawData.length("+receivedRawData.length+") < posInBuffer + needToReadSize ("+(posInBuffer + needToReadSize)+")");
-			return false;
+			return true;
 		}
-		return true;
+		return false;
 	}
 	/** Erreur critique : supprimer les données du NetBuffer
 	 */
@@ -270,19 +270,24 @@ public class NetBuffer { // fonctionnement synchrone, non thread-safe
 	private boolean checkCriticalReadSizeError(int posInBuffer, int needToReadSize) {
 		if (bufferIsTooSmall(posInBuffer, needToReadSize)) {
 			clearRawDataOnCriticalError();
+			//System.out.println("----> NetBuffer.checkCriticalReadSizeError : retuen TRUE");
 			return true;
 		}
+		//System.out.println("----> NetBuffer.checkCriticalReadSizeError : retuen FALSE");
 		return false;
 	}
 	
 	/** Lire le buffer depuis un tableau d'octets, buffer précédemment encodé via NetBuffer.convertToByteArray()
+	 * @param skipBufferSizeBytes  mettre l'offset à 4 si vrai.
 	 */
-	public void readFromReceivedRawData() {
+	public void readFromReceivedRawData() { //(boolean skipBufferSizeBytes) {
 		dataList.clear();
 		currentReadPos = 0;
+		//System.out.println("----> NetBuffer.readFromReceivedRawData : receivedRawData.length = " + receivedRawData.length);
 		
 		if (receivedRawData == null) return;
 		if (checkCriticalReadSizeError(0, 4)) return; // <- erreur critique, taille du buffer insuffisante
+		
 		byte[] bufferSizeAsByteArray = new byte[4];
 		System.arraycopy(receivedRawData, 0, bufferSizeAsByteArray, 0, 4);
 		int totalDataBufferSize = NetBufferData.byteArrayToInt(bufferSizeAsByteArray);

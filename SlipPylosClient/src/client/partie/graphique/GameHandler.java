@@ -18,7 +18,10 @@ import client.listeners.Listeners;
 import client.outils.graphiques.BoxPosition;
 import client.outils.graphiques.GraphicsHandler;
 import client.outils.graphiques.PImage;
+import client.roomReseauLocalAttente.RoomReseauLocalAttenteHandler;
 import commun.partie.nonGraphique.*;
+import slip.network.buffers.NetBuffer;
+import slip.network.tcp.TCPClient;
 
 
 
@@ -63,9 +66,9 @@ public class GameHandler {
 	
 	/** Constructeur, crée l'objet partie
 	 */
-	public GameHandler(ModeDeJeu arg_modeDeJeu) {
+	public GameHandler(ModeDeJeu arg_modeDeJeu, TeamType cEstLeTourDe, TeamType equipeJoueurActuel) {
 		GameHandler.jeuActuel = this;
-		GameHandler.partieActuelle = new PylosPartie(arg_modeDeJeu); // créer la partie avant les Listener
+		GameHandler.partieActuelle = new PylosPartie(arg_modeDeJeu, cEstLeTourDe, equipeJoueurActuel); // créer la partie avant les Listener
 	}
 	
 	/*public void setAsCurrentRoom() {
@@ -340,7 +343,7 @@ public class GameHandler {
 	
 	// drawAllJetonsNb() à faire avant drawTourSuivant()
 	public void drawTourSuivant() {
-
+		/*
 		int imgWidth = PImage.getImageWidth(tourSuivantImg);
 		int imgHeight = PImage.getImageHeight(tourSuivantImg);
 		BoxPosition pos = new BoxPosition(xTourSuivant, yTourSuivant, xTourSuivant + imgWidth, yTourSuivant + imgHeight);
@@ -357,21 +360,27 @@ public class GameHandler {
 			}
 		}
 		PImage.drawImageAlpha(currentGraphics, tourSuivantImg, xTourSuivant - posOffset, yTourSuivant - posOffset, 1);
+		*/
+		
+		boolean clickable = partieActuelle.tourDe == partieActuelle.equipeJoueur;
+		boolean goTourSuivant = PImage.checkImageAsButton(clickable, currentGraphics, tourSuivantImg, xTourSuivant, yTourSuivant);
+		
+		
 		
 		if (goTourSuivant) {
-			PylosPartie partie = GameHandler.partieActuelle;
+			PylosPartie partie = partieActuelle;
 			boolean peutChangerDeTour = true;
 			if (!partie.joueurAJoueUnPion) {
 				LogWriter.Log("MyMouseListener.mousePressed : Impossible de passer votre tour lorsque vous n'avez pas encore joué !");
 				peutChangerDeTour = false;
 			}
-			if (GameHandler.partieActuelle.peutReprendrePionsNb > 1) {
+			if (partieActuelle.peutReprendrePionsNb > 1) {
 				LogWriter.Log("MyMouseListener.mousePressed : Impossible de passer votre tour lorsque vous n'avez repris au moins un des pions qui vons sont dûs !");
 				peutChangerDeTour = false;
 			}
-			if (peutChangerDeTour)
-			if (partie.tourDe == partie.equipeJoueur) {
+			if (peutChangerDeTour) {
 				partie.tourSuivant();
+				if (partieActuelle.modeDeJeu == ModeDeJeu.RESEAU_LOCAL) reseauLocal_passeSonTour();
 			}
 		}
 	}
@@ -400,6 +409,8 @@ public class GameHandler {
 		drawPoserPion();
 		// Dessin du bouton "tour suivant"
 		drawTourSuivant();
+		// Boucle si le jeu est en réseau local
+		loopReseauLocal();
 		
 		
 		/*
@@ -483,9 +494,11 @@ public class GameHandler {
 						return;
 					}
 					GameHandler.partieActuelle.deplacerUnPion(equipeJoueur, essayerDePoserPionIci.hauteur, essayerDePoserPionIci.xCell, essayerDePoserPionIci.yCell, dragCell.hauteur, dragCell.xCell, dragCell.yCell);
+					if (partieActuelle.modeDeJeu == ModeDeJeu.RESEAU_LOCAL) reseauLocal_deplacePion(essayerDePoserPionIci.hauteur, essayerDePoserPionIci.xCell, essayerDePoserPionIci.yCell, dragCell.hauteur, dragCell.xCell, dragCell.yCell);
 					break;
 				case PION_EN_MAIN_DEPUIS_RESERVE :
 					GameHandler.partieActuelle.poseUnPionDeSaReserve(equipeJoueur, essayerDePoserPionIci.hauteur, essayerDePoserPionIci.xCell, essayerDePoserPionIci.yCell);
+					if (partieActuelle.modeDeJeu == ModeDeJeu.RESEAU_LOCAL) reseauLocal_posePionDeSaReserve(essayerDePoserPionIci.hauteur, essayerDePoserPionIci.xCell, essayerDePoserPionIci.yCell);
 					break;
 				default : break;
 				}
@@ -517,13 +530,17 @@ public class GameHandler {
 		if (GameHandler.jeuActuel.volonteJoueur == VolonteJoueur.REPRENDRE_UN_PION) {
 			if (GameHandler.jeuActuel.pickUpCell != null) { // actualisé juste au-dessus via : GameHandler.jeuActuel.refreshWithMousePosition();
 				// Reprendre ce pion
-				PylosCell pickUpCell = GameHandler.jeuActuel.pickUpCell;
-				GameHandler.partieActuelle.setCell(pickUpCell.hauteur, pickUpCell.xCell, pickUpCell.yCell, TeamType.AUCUNE);
+				PylosCell pickUpCell = jeuActuel.pickUpCell;
+				
+				partieActuelle.reprendUnPion(partieActuelle.equipeJoueur, pickUpCell.hauteur, pickUpCell.xCell, pickUpCell.yCell);
+				if (partieActuelle.modeDeJeu == ModeDeJeu.RESEAU_LOCAL) reseauLocal_reprendUnPion(pickUpCell.hauteur, pickUpCell.xCell, pickUpCell.yCell);
+				
+				/*GameHandler.partieActuelle.setCell(pickUpCell.hauteur, pickUpCell.xCell, pickUpCell.yCell, TeamType.AUCUNE);
 				TeamType equipeJoueur = GameHandler.partieActuelle.equipeJoueur;
 				if (equipeJoueur == TeamType.BLANC) GameHandler.partieActuelle.nbJetonsBlanc++;
 				if (equipeJoueur == TeamType.NOIR)  GameHandler.partieActuelle.nbJetonsNoir++;
+				GameHandler.partieActuelle.peutReprendrePionsNb--;*/
 				
-				GameHandler.partieActuelle.peutReprendrePionsNb--;
 				GameHandler.jeuActuel.refreshWithMousePosition(); // actualisation fonctionnelle et graphique
 			}
 		}
@@ -546,6 +563,112 @@ public class GameHandler {
 		GameHandler.jeuActuel.lastMouseY = mouseEvent.mouseY;
 		GameHandler.jeuActuel.refreshWithMousePosition();
 		
+	}
+	
+	/** Boucle effectuée si le jeu actuel est de type réseau local.
+	 */
+	public void loopReseauLocal() {
+		if (partieActuelle.modeDeJeu != ModeDeJeu.RESEAU_LOCAL) return; // seulement exécuté si partie en réseau local
+		if (reseauLocal_verifieConnexion() == false) return;
+		TCPClient tcp = RoomReseauLocalAttenteHandler.autreJoueurLocalTCPClient;
+		// L'autre client est supposé complètement honnête, c'est du réseau local, il n'y a pas grand chose à gagner si on triche.
+		NetBuffer receivedMessage = tcp.getNewMessage();
+		if (receivedMessage == null) return; // rien à faire
+		int messageID = receivedMessage.readInt();
+		
+		//System.out.println("GameHandler.loopReseauLocal, message reçu : messageID = " + messageID);
+		
+		if (messageID == 1) { // poser un pion à partir de sa réserve
+			int hauteur = receivedMessage.readInt();
+			int xCell = receivedMessage.readInt();
+			int yCell = receivedMessage.readInt();
+			TeamType equipeAutreJoueur = partieActuelle.getEquipeAdverse();
+			partieActuelle.poseUnPionDeSaReserve(equipeAutreJoueur, hauteur, xCell, yCell);
+		}
+
+		if (messageID == 2) { // déplacer un pion
+			int hauteur = receivedMessage.readInt();
+			int xCell = receivedMessage.readInt();
+			int yCell = receivedMessage.readInt();
+			int hauteur_init = receivedMessage.readInt();
+			int xCell_init = receivedMessage.readInt();
+			int yCell_init = receivedMessage.readInt();
+			TeamType equipeAutreJoueur = partieActuelle.getEquipeAdverse();
+			partieActuelle.deplacerUnPion(equipeAutreJoueur, hauteur, xCell, yCell, hauteur_init, xCell_init, yCell_init);
+		}
+
+		if (messageID == 3) { // reprendre un pion
+			int hauteur = receivedMessage.readInt();
+			int xCell = receivedMessage.readInt();
+			int yCell = receivedMessage.readInt();
+			TeamType equipeAutreJoueur = partieActuelle.getEquipeAdverse();
+			partieActuelle.reprendUnPion(equipeAutreJoueur, hauteur, xCell, yCell);
+		}
+
+		if (messageID == 4) { // passer son tour
+			partieActuelle.tourSuivant();
+		}
+	}
+	
+	private boolean reseauLocal_verifieConnexion() {
+		//System.out.println("GameHandler.reseauLocal_verifieConnexion");
+		if (partieActuelle.modeDeJeu != ModeDeJeu.RESEAU_LOCAL) return false; // seulement exécuté si partie en réseau local
+		TCPClient tcp = RoomReseauLocalAttenteHandler.autreJoueurLocalTCPClient;
+		if (tcp == null) {
+			GraphicsHandler.roomGoTo_menuChoixTypePartie();
+			return false;
+		}
+		if (tcp.isConnected() == false) {
+			GraphicsHandler.roomGoTo_menuChoixTypePartie();
+			return false;
+		}
+		return true;
+	}
+	
+	private void reseauLocal_envoieMessage(NetBuffer message) {
+		//System.out.println("GameHandler.reseauLocal_envoieMessage");
+		if (reseauLocal_verifieConnexion() == false) return;
+		TCPClient tcp = RoomReseauLocalAttenteHandler.autreJoueurLocalTCPClient;
+		tcp.sendMessage(message);
+	}
+	
+	private void reseauLocal_posePionDeSaReserve(int hauteur, int xCell, int yCell) {
+		//System.out.println("GameHandler.reseauLocal_posePionDeSaReserve");
+		NetBuffer message = new NetBuffer();
+		message.writeInt(1);
+		message.writeInt(hauteur);
+		message.writeInt(xCell);
+		message.writeInt(yCell);
+		reseauLocal_envoieMessage(message);
+	}
+	private void reseauLocal_deplacePion(int hauteur, int xCell, int yCell, int hauteur_init, int xCell_init, int yCell_init) {
+		//System.out.println("GameHandler.reseauLocal_deplacePion");
+		NetBuffer message = new NetBuffer();
+		message.writeInt(2);
+		message.writeInt(hauteur);
+		message.writeInt(xCell);
+		message.writeInt(yCell);
+		message.writeInt(hauteur_init);
+		message.writeInt(xCell_init);
+		message.writeInt(yCell_init);
+		reseauLocal_envoieMessage(message);
+	}
+
+	private void reseauLocal_reprendUnPion(int hauteur, int xCell, int yCell) {
+		//System.out.println("GameHandler.reseauLocal_reprendUnPion");
+		NetBuffer message = new NetBuffer();
+		message.writeInt(3);
+		message.writeInt(hauteur);
+		message.writeInt(xCell);
+		message.writeInt(yCell);
+		reseauLocal_envoieMessage(message);
+	}
+	
+	private void reseauLocal_passeSonTour() {
+		//System.out.println("GameHandler.reseauLocal_passeSonTour");
+		NetBuffer message = new NetBuffer();
+		message.writeInt(4);
+		reseauLocal_envoieMessage(message);
 	}
 	
 	

@@ -1,5 +1,6 @@
 package commun.partie.nonGraphique;
 
+
 public class PylosPartie {
 	
 	public int nbJetonsBlanc = 0;//15;
@@ -12,6 +13,7 @@ public class PylosPartie {
 	public TeamType tourDe = TeamType.NOIR;
 	//public IA_v1 ia = new IA_v1(TeamType.NOIR, this);
 	public TeamType equipeJoueur = TeamType.BLANC;
+	public TeamType equipeIA = TeamType.NOIR; // si il y a une IA (solo local)
 	public PylosPartieVariante varianteDuJeu = PylosPartieVariante.JOUEURS_AVERTIS;
 	
 	
@@ -29,14 +31,33 @@ public class PylosPartie {
 		return nbJetons;
 	}
 	
-	public PylosPartie(ModeDeJeu arg_modeDeJeu) { // constructeur
+	/** 
+	 * @param arg_modeDeJeu
+	 * @param cEstLeTourDe
+	 * @param equipeJoueurActuel ma couleur, la couleur du joueur du client actuel
+	 */
+	public PylosPartie(ModeDeJeu arg_modeDeJeu, TeamType cEstLeTourDe, TeamType equipeJoueurActuel) { // constructeur
 		plateauActuel = new PylosGridArray(nbCasesCote, this);
 		nbJetonsTotal = computeNbJetonsTotal();
 		nbJetonsBlanc = nbJetonsTotal / 2;
 		nbJetonsNoir = nbJetonsTotal / 2;
 		modeDeJeu = arg_modeDeJeu;
+		
+		tourDe = cEstLeTourDe;
+		if (tourDe != TeamType.NOIR && tourDe != TeamType.BLANC) // erreur dans l'équipe qui doit jouer
+			tourDe = TeamType.BLANC;
+
+		if (equipeJoueurActuel != TeamType.NOIR && equipeJoueurActuel != TeamType.BLANC) // erreur dans l'équipe qui doit jouer
+			equipeJoueurActuel = TeamType.BLANC;
+		equipeJoueur = equipeJoueurActuel; // écrasé si HOT_SEAT
+		
 		if (modeDeJeu == ModeDeJeu.HOT_SEAT) {
 			equipeJoueur = tourDe;
+		}
+		
+		if (modeDeJeu == ModeDeJeu.SOLO_LOCAL) {
+			if (equipeJoueur == TeamType.BLANC) equipeIA = TeamType.NOIR;
+			if (equipeJoueur == TeamType.NOIR) equipeIA = TeamType.BLANC;
 		}
 		
 		if (tourDe != equipeJoueur && modeDeJeu == ModeDeJeu.SOLO_LOCAL) {
@@ -44,8 +65,11 @@ public class PylosPartie {
 			tourSuivant();
 		}
 		
+
 		
-		// Cr�ation de toutes les grilles
+		
+		
+		// Création de toutes les grilles
 		/*a1Grid = new PylosGrid[nbCasesCote];
 		for (int hauteurActuelle = 0; hauteurActuelle <= hauteurMax; hauteurActuelle++) {
 			a1Grid[hauteurActuelle] = new PylosGrid(nbCasesCote - hauteurActuelle, nbCasesCote - hauteurActuelle, hauteurActuelle, this);
@@ -148,7 +172,7 @@ public class PylosPartie {
 	private void faireJouerIA() {
 		//IA_v0_stupid.joueUnCoup(TeamType.NOIR, this, 4000);
 		
-		IA_v4.joueUnCoup(TeamType.NOIR, this, 4);
+		IA_v4.joueUnCoup(equipeIA, this, 4);
 		//IA_v4.joueUnCoup(TeamType.NOIR, this, 4);
 		joueurAJoueUnPion = true;
 		// peutReprendrePionsNb = 0; normallement géré par l'IA
@@ -198,7 +222,7 @@ public class PylosPartie {
 		}
 		return true;
 	}
-
+	
 	public boolean deplacerUnPion(TeamType equipeQuiFaitAction, int hauteur, int xCell, int yCell, int hauteur_initiale, int xCell_initiale, int yCell_initiale) {
 		if (tourDe != equipeQuiFaitAction) return false; // si ce n'est pas à cette équipe de jouer
 		if (joueurAJoueUnPion) return false; // déjà joué ce tour, impossible de rejouer
@@ -223,12 +247,29 @@ public class PylosPartie {
 		return true;
 	}
 	
-	/** Passe le tour automatiquement si c'est possible (TODO)
+
+	public void reprendUnPion(TeamType equipeQuiFaitAction, int hauteur, int xCell, int yCell) {
+		// equipeQuiFaitAction == tourDe, obligatoirement
+		
+		setCell(hauteur, xCell, yCell, TeamType.AUCUNE);
+		if (equipeQuiFaitAction == TeamType.BLANC) nbJetonsBlanc++;
+		if (equipeQuiFaitAction == TeamType.NOIR)  nbJetonsNoir++;
+		
+		peutReprendrePionsNb--;
+	}
+	
+	/** Passe le tour automatiquement si c'est possible : TODO
 	 * @return
 	 */
 	public boolean tourSuivant_automatique() {
+		// TODO TODOOUUUUU !
 		return false;
 	}
 	
+	public TeamType getEquipeAdverse() {
+		if (equipeJoueur == TeamType.NOIR) return TeamType.BLANC;
+		if (equipeJoueur == TeamType.BLANC) return TeamType.NOIR;
+		return TeamType.AUCUNE;
+	}
 	
 }

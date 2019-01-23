@@ -3,6 +3,7 @@ package client.room1;
 import java.awt.Graphics2D;
 import java.awt.Image;
 import java.util.ArrayList;
+import java.util.Random;
 
 import client.listeners.GenericMouseListener;
 import client.listeners.GenericMouseMotionListener;
@@ -13,6 +14,7 @@ import client.outils.graphiques.PImage;
 import client.partie.graphique.RessourceManager;
 import client.partie.graphique.RoomType;
 import commun.partie.nonGraphique.ModeDeJeu;
+import commun.partie.nonGraphique.TeamType;
 
 
 class Room1Button {
@@ -42,6 +44,7 @@ public class Room1Handler {
 	private int buttonWidth = 400;
 	private int buttonHeight = 42;
 	private int buttonHeightSpace = 8;
+	private Random myRandom = new Random();
 	
 	/*
 	public void setAsCurrentRoom() {
@@ -96,13 +99,19 @@ public class Room1Handler {
 			Room1Button button = buttonList.get(iButton);
 			
 			boolean mouseRealeasedOnButton = PImage.checkImageAsButton(true, currentGraphics, button.displayImage, button.x, button.y, true, 3);
+			
+			// Choix aléatoire de la première équipe qui doit jouer
+			boolean leBlancJoue = myRandom.nextBoolean();
+			TeamType equipeQuiJoue;
+			if (leBlancJoue) equipeQuiJoue = TeamType.BLANC; else equipeQuiJoue = TeamType.NOIR;
+			
 			if (mouseRealeasedOnButton) {
 				switch (iButton) {
 				case 0 :
-					GraphicsHandler.roomGoTo_game(ModeDeJeu.SOLO_LOCAL);
+					GraphicsHandler.roomGoTo_game(ModeDeJeu.SOLO_LOCAL, equipeQuiJoue, equipeQuiJoue);
 					break;
 				case 1 : 
-					GraphicsHandler.roomGoTo_game(ModeDeJeu.HOT_SEAT);
+					GraphicsHandler.roomGoTo_game(ModeDeJeu.HOT_SEAT, equipeQuiJoue, equipeQuiJoue);
 					break;
 				case 2 : 
 					GraphicsHandler.roomGoTo_menuReseauLocal();
