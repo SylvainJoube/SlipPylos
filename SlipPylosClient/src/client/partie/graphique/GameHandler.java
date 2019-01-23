@@ -403,6 +403,8 @@ public class GameHandler {
 		drawAllJetonsNb();
 		// Dessin des lignes composant la grille
 		drawGridLines();
+		// Affichage des pions 1 à 1 pour l'IA
+		partieActuelle.actionsGraphiques_loopEffectuerAction();
 		// Dessin des pions dans la grille
 		drawPawnsOnGrid();
 		// Dessin de la future position du pion à poser
@@ -411,6 +413,7 @@ public class GameHandler {
 		drawTourSuivant();
 		// Boucle si le jeu est en réseau local
 		loopReseauLocal();
+		
 		
 		
 		/*
@@ -554,6 +557,7 @@ public class GameHandler {
 		
 		GameHandler.jeuActuel.dragCell = null;
 		GameHandler.jeuActuel.refreshWithMousePosition();
+		partieActuelle.tourSuivant_automatique();
 	}
 	
 

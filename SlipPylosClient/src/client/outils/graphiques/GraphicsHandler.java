@@ -101,6 +101,8 @@ public class GraphicsHandler extends Canvas {
 	JTextField exempleTextField = new JTextField("--> Nouveau texte à modifier <--");
 	JPasswordField exempleTextField4 = new JPasswordField("--> Nouveau texte à modifier <--");
 	
+	
+	
 	//JTextField myJt;
 	
 	private static JPanel applicationPanel;

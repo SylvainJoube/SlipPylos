@@ -1,5 +1,6 @@
 package commun.partie.nonGraphique;
 
+import java.util.ArrayList;
 
 public class PylosPartie {
 	
@@ -21,7 +22,6 @@ public class PylosPartie {
 	public boolean joueurAJoueUnPion = false; // Le joueur ne peut jouer qu'une seule fois un pion (poser un pion de sa réserve ou bouger un de ses pions pour le réhausser)
 	public int peutReprendrePionsNb = 0; // Si le joueur peut reprendre des pions (après avoir joué)
 	public ModeDeJeu modeDeJeu = ModeDeJeu.HOT_SEAT; // par défaut, la partie est en local
-	
 	
 	public int computeNbJetonsTotal() {
 		int nbJetons = 0;
@@ -89,12 +89,16 @@ public class PylosPartie {
 	}
 	
 	public boolean tourSuivant() {
+		//System.out.println("PylosPartie.tourSuivant : tourDe = " + tourDe);
 		if (nbJetonsBlanc <= 0 && nbJetonsNoir <= 0) return false; // fin de la partie !
 		
+		// Je regarde 
+		/*
 		if (nbJetonsBlanc == 0 || nbJetonsNoir == 0) {
 			peutReprendrePionsNb = 0;
 			joueurAJoueUnPion = true;
 		}
+		*/
 		
 		int pionsRestantsAuJoueurActuel = 0;
 		int pionsRestantsAuJoueurSuivant = 0;
@@ -110,7 +114,10 @@ public class PylosPartie {
 		default : break;
 		}
 		
-		if (pionsRestantsAuJoueurActuel > 0) { // encore des pions
+		
+		
+		//if (pionsRestantsAuJoueurActuel > 0)  // encore des pions
+		if (IA_v40.ceJoueurPeutFaireQuelqueChosePendantSonTour(this, tourDe)) { // encore quelque chose à faire
 			if (!joueurAJoueUnPion) { // encore des pions et pas encore joué : impossible de passer le tour
 				System.out.println("PylosPartie : Impossible de passer votre tour lorsque vous n'avez pas encore joué !");
 				//LogWriter.Log("MyMouseListener.mousePressed : Impossible de passer votre tour lorsque vous n'avez pas encore joué !");
@@ -129,7 +136,8 @@ public class PylosPartie {
 		
 		boolean passerLeTourDuJoueurSuivant = false;
 		// Si le joueur actuel a encore des pions et a joué, et que le joueur suivant n'a plus de pions : c'est à nouveau le tour du joueur actuel.
-		if (pionsRestantsAuJoueurActuel != 0 && pionsRestantsAuJoueurSuivant <= 0) {
+		boolean leJoueurSuivantPeutFaireQuelqueChose = IA_v40.ceJoueurPeutFaireQuelqueChosePendantSonTour(this, tourDe.equipeOpposee());
+		if (pionsRestantsAuJoueurActuel != 0 && (leJoueurSuivantPeutFaireQuelqueChose == false) ) { // pionsRestantsAuJoueurSuivant <= 0
 			passerLeTourDuJoueurSuivant = true;
 		}
 		
@@ -142,6 +150,8 @@ public class PylosPartie {
 				tourDe = TeamType.NOIR;
 			else
 				tourDe = TeamType.BLANC;
+
+			//IA_v40.listerTousLesCoupsPossiblesCeTour(plateauActuel, tourDe);
 		}
 		
 		
@@ -163,20 +173,24 @@ public class PylosPartie {
 		// Jeu contre l'IA en solo local
 		if (modeDeJeu == ModeDeJeu.SOLO_LOCAL && tourDe != equipeJoueur) {
 			faireJouerIA();
-			tourSuivant();
+			//tourSuivant();  faireJouerIA s'occupe de faire passer le tour si besoin (peut aussi attendre actionsGraphiques_loopEffectuerAction() s'il y a des actions graphiques unitaires à afficher)
 		}
 		
 		return true;
 	}
 	
+	public void tourSuivant_force() {
+		
+	}
+	
 	private void faireJouerIA() {
 		//IA_v0_stupid.joueUnCoup(TeamType.NOIR, this, 4000);
 		
-		IA_v4.joueUnCoup(equipeIA, this, 4);
+		IA_v40.joueUnCoup(equipeIA, this, 4);
 		//IA_v4.joueUnCoup(TeamType.NOIR, this, 4);
-		joueurAJoueUnPion = true;
+		//joueurAJoueUnPion = true;
 		// peutReprendrePionsNb = 0; normallement géré par l'IA
-		System.out.println("PylosPartie : faireJouerIA()");
+		//System.out.println("PylosPartie : faireJouerIA()");
 	}
 	
 	// Poser un pion à partir de sa réserve
@@ -222,10 +236,40 @@ public class PylosPartie {
 		}
 		return true;
 	}
-	
+
 	public boolean deplacerUnPion(TeamType equipeQuiFaitAction, int hauteur, int xCell, int yCell, int hauteur_initiale, int xCell_initiale, int yCell_initiale) {
 		if (tourDe != equipeQuiFaitAction) return false; // si ce n'est pas à cette équipe de jouer
 		if (joueurAJoueUnPion) return false; // déjà joué ce tour, impossible de rejouer
+		if (plateauActuel.canPlaceAtPosition(hauteur, xCell, yCell) == false) return false; // position invalide, ou pas de cellule en-dessous
+		boolean peutBougerPion = plateauActuel.canMovePawn(hauteur, xCell, yCell, hauteur_initiale, xCell_initiale, yCell_initiale);
+		if (peutBougerPion == false) return false;
+		plateauActuel.deplacerUnPion_forcerDepuisPartie(equipeQuiFaitAction, hauteur, xCell, yCell, hauteur_initiale, xCell_initiale, yCell_initiale);
+		/* = ce qui est en-dessous :
+		// Je supprime l'ancien pion
+		setCell(hauteur_initiale, xCell_initiale, yCell_initiale, TeamType.AUCUNE);
+		// J'ajoute le nouveau pion
+		setCell(hauteur, xCell, yCell, equipeQuiFaitAction);
+		*/
+		joueurAJoueUnPion = true;
+		if (plateauActuel.willFormSameColorRectangle(hauteur, xCell, yCell, equipeQuiFaitAction)) {
+			peutReprendrePionsNb = 2;
+		}
+		if (plateauActuel.willFormSameColorLine(hauteur, xCell, yCell, equipeQuiFaitAction)) {
+			peutReprendrePionsNb = 2;
+		}
+		if ((nbJetonsBlanc == 0 || nbJetonsNoir == 0) && peutReprendrePionsNb <= 1) {
+			peutReprendrePionsNb = 0;
+			tourSuivant();
+		}
+		return true;
+	}
+	
+	// objet retour doit contenir : possible ou non, reprendre des pions ou non.
+	/*public PylosPartie_evaluationCoup evaluer_deplacerUnPion(TeamType equipeQuiFaitAction, int hauteur, int xCell, int yCell, int hauteur_initiale, int xCell_initiale, int yCell_initiale) {
+		PylosPartie_evaluationCoup evaluationCoup = new PylosPartie_evaluationCoup();
+		
+		//if (tourDe != equipeQuiFaitAction) return evaluationCoup; // si ce n'est pas à cette équipe de jouer
+		//if (joueurAJoueUnPion) return false; // déjà joué ce tour, impossible de rejouer
 		if (plateauActuel.canPlaceAtPosition(hauteur, xCell, yCell) == false) return false; // position invalide, ou pas de cellule en-dessous
 		boolean peutBougerPion = plateauActuel.canMovePawn(hauteur, xCell, yCell, hauteur_initiale, xCell_initiale, yCell_initiale);
 		if (peutBougerPion == false) return false;
@@ -245,7 +289,9 @@ public class PylosPartie {
 			tourSuivant();
 		}
 		return true;
-	}
+	}*/
+	
+	
 	
 
 	public void reprendUnPion(TeamType equipeQuiFaitAction, int hauteur, int xCell, int yCell) {
@@ -261,9 +307,18 @@ public class PylosPartie {
 	/** Passe le tour automatiquement si c'est possible : TODO
 	 * @return
 	 */
-	public boolean tourSuivant_automatique() {
-		// TODO TODOOUUUUU !
-		return false;
+	public void tourSuivant_automatique() {
+		// OK System.out.println("tourSuivant_automatique : ");
+		if (peutReprendrePionsNb == 0 && joueurAJoueUnPion) {
+			tourSuivant();
+			return;
+		}
+		
+		boolean leJoueurActuelPeutFaireQuelqueChose = IA_v40.ceJoueurPeutFaireQuelqueChosePendantSonTour(this, tourDe);
+		if (leJoueurActuelPeutFaireQuelqueChose == false && peutReprendrePionsNb == 0) {
+			tourSuivant();
+			return;
+		}
 	}
 	
 	public TeamType getEquipeAdverse() {
@@ -272,4 +327,57 @@ public class PylosPartie {
 		return TeamType.AUCUNE;
 	}
 	
+	private long actionsGraphiques_intervalMsEntreActions = 1000;
+	private long actionsGraphiques_tempsDerniereAction = 0;
+	//public boolean actionsGraphiques_doitPasserleTourALaFin;
+	private ArrayList<Graphique_pionAModifier> actionsGraphiques_listeDePionsAModifier = new ArrayList<Graphique_pionAModifier>();
+	
+	public void actionsGraphiques_ajouterCase(int hauteur, int xCell, int yCell, TeamType equipe) {
+		Graphique_pionAModifier pion = new Graphique_pionAModifier();
+		pion.hauteur = hauteur;
+		pion.xCell = xCell;
+		pion.yCell = yCell;
+		pion.equipe = equipe;
+		actionsGraphiques_listeDePionsAModifier.add(pion);
+	}
+	
+	public void actionsGraphiques_setTimer() {
+		actionsGraphiques_tempsDerniereAction = System.currentTimeMillis();
+	}
+
+	public boolean actionsGraphiques_loopEffectuerAction() {
+		//System.out.println("PylosPartie.actionsGraphiques_loopEffectuerAction : tourDe = " + tourDe);
+		if (actionsGraphiques_listeDePionsAModifier.size() == 0) return false;
+		
+		if (actionsGraphiques_tempsDerniereAction + actionsGraphiques_intervalMsEntreActions < System.currentTimeMillis()) {
+			Graphique_pionAModifier pion = actionsGraphiques_listeDePionsAModifier.get(0);
+			actionsGraphiques_listeDePionsAModifier.remove(0);
+			this.setCell(pion.hauteur, pion.xCell, pion.yCell, pion.equipe);
+			actionsGraphiques_tempsDerniereAction = System.currentTimeMillis();
+			if (actionsGraphiques_listeDePionsAModifier.size() == 0) {
+				//if (actionsGraphiques_doitPasserleTourALaFin)
+				tourSuivant(); // implicite
+				return false;
+			}
+			return true;
+		}
+		return true;
+	}
+	
+	public boolean actionsGraphiques_peutPasserLeTour() {
+		if (actionsGraphiques_listeDePionsAModifier.size() == 0) return true;
+		return false;
+	}
+	
+	
+	
+	
 }
+
+// Pour l'affichage lent des actions à l'écran
+class Graphique_pionAModifier {
+	public int hauteur, xCell, yCell;
+	public TeamType equipe;
+}
+
+

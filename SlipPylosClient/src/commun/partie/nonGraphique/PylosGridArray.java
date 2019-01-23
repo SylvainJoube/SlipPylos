@@ -148,6 +148,11 @@ public class PylosGridArray {
 		
 		if ( ! isValidPawnPosition(hauteur, xCell, yCell) ) return false;
 		
+		// Vérification de la hauteur : si il y a une case initiale, sa hauteur doit être strictement inférieure à la nouvelle hauteur
+		if (initial_hauteur >= 0) { // i.e. != -1
+			if (initial_hauteur >= hauteur) return false; // la hauteur initiale doit être inférieure strictement à la nouvelle hauteur
+		}
+		
 		// Je vérifie qu'il n'y a pas de pions au-dessus
 		if (hauteur + 1 >= a1Grid.length) return false; // impossible de bouger le denier pion !
 		PylosGrid aboveGrid = a1Grid[hauteur + 1];
@@ -191,6 +196,29 @@ public class PylosGridArray {
 		if (hauteur >= a1Grid.length) return false; // trop haut
 		PylosGrid grid = a1Grid[hauteur];
 		return grid.canPlaceAtPosition(xCell, yCell);
+	}
+	
+	/** N'utiliser cette fonction que depui un objet PylosPartie (dans la fonction )
+	 *  ou depuis un objet IA. Cette fonction met juste à jour les cases, sans aucune vérification ni crédit/débit de piont à l'équipe qui joue.
+	 *  @param equipeQuiFaitAction
+	 *  @param hauteur
+	 *  @param xCell
+	 *  @param yCell
+	 *  @param hauteur_initiale
+	 *  @param xCell_initiale
+	 *  @param yCell_initiale
+	 */
+	public void deplacerUnPion_forcerDepuisPartie(TeamType equipeQuiFaitAction, int hauteur, int xCell, int yCell, int hauteur_initiale, int xCell_initiale, int yCell_initiale) {
+		// Je supprime l'ancien pion
+		setCell(hauteur_initiale, xCell_initiale, yCell_initiale, TeamType.AUCUNE);
+		// J'ajoute le nouveau pion
+		setCell(hauteur, xCell, yCell, equipeQuiFaitAction);
+	}
+	
+	public TeamType getCellTeam(int gridHeight, int xCell, int yCell) {
+		if (isValidPawnPosition(gridHeight, xCell, yCell) == false) return TeamType.INVALIDE;
+		PylosGrid grid = a1Grid[gridHeight];
+		return grid.getTeamAtCellPosition_noCheck(xCell, yCell);
 	}
 	
 }
