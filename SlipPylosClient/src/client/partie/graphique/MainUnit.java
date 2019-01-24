@@ -21,7 +21,7 @@ public class MainUnit {
 		//gHandler.currentRoomType = RoomType.MENU_CHOIX_TYPE_PARTIE;
 		
 		
-		gHandler.roomGoTo_menuChoixTypePartie();
+		GraphicsHandler.roomGoTo_menuChoixTypePartie();
 		gHandler.loop();
 		
 		

@@ -186,7 +186,8 @@ public class PylosPartie {
 	private void faireJouerIA() {
 		//IA_v0_stupid.joueUnCoup(TeamType.NOIR, this, 4000);
 		
-		IA_v40.joueUnCoup(equipeIA, this, 4);
+		IA_v40.playOnce(this, equipeIA, 4, 8000);
+		
 		//IA_v4.joueUnCoup(TeamType.NOIR, this, 4);
 		//joueurAJoueUnPion = true;
 		// peutReprendrePionsNb = 0; normallement géré par l'IA

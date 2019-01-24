@@ -93,7 +93,7 @@ public class TCPServer {
 	/** Accepte un nouveau client, de manière thread-safe.
 	 * Lors de la connexion TCP d'un client, il est automatiquement ajouté au serveur, et est mis en attente d'acceptation.
 	 * Appeler cette méthode pour accepter un nouveau client et pouvoir communiquer avec lui (par la référence à TCPClient)
-	 * @return un des clients en attente d'acceptation
+	 * @return null si aucun client en attente, un TCPClient si au moins un nouveau client s'est connecté depuis le dernier appel à cette fonction
 	 */
 	public TCPClient acceptNewClient() {
 		synchronized (clientList_notYetAccepted_Lock) {
@@ -106,7 +106,10 @@ public class TCPServer {
 	}
 	
 	/** Identique à acceptNewClient();
-	 * @return null si aucun client en attente, un TCPClient si un nouveau client s'est connecté depuis le dernier appel à cette fonction.
+	 * Accepte un nouveau client, de manière thread-safe.
+	 * Lors de la connexion TCP d'un client, il est automatiquement ajouté au serveur, et est mis en attente d'acceptation.
+	 * Appeler cette méthode pour accepter un nouveau client et pouvoir communiquer avec lui (par la référence à TCPClient)
+	 * @return null si aucun client en attente, un TCPClient si au moins un nouveau client s'est connecté depuis le dernier appel à cette fonction
 	 */
 	public TCPClient accept() {
 		return acceptNewClient();

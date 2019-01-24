@@ -116,6 +116,9 @@ public class Room1Handler {
 				case 2 : 
 					GraphicsHandler.roomGoTo_menuReseauLocal();
 					break;
+				case 3 : 
+					GraphicsHandler.roomGoTo_internet();
+					break;
 				}
 			}
 		}

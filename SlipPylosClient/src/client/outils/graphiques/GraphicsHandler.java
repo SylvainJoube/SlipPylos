@@ -30,6 +30,7 @@ import client.partie.graphique.LogWriter;
 import client.partie.graphique.RessourceManager;
 import client.partie.graphique.RoomType;
 import client.room1.Room1Handler;
+import client.roomInternet.RoomInternetHandler;
 import client.roomReseauLocalAttente.RoomReseauLocalAttenteHandler;
 //import commun.partie.nonGraphique.PylosPartie;
 import commun.partie.nonGraphique.ModeDeJeu;
@@ -208,6 +209,14 @@ public class GraphicsHandler extends Canvas {
 				// seulement pour GameHandler : Listeners.frame_clearMouseSate();
 			}
 			
+			if (currentRoomType == RoomType.MENU_INTERNET) {
+				Listeners.refreshFrameListenerEvents(); // pour faire la détection des collisions en même temps que l'affichage graphique
+				RoomInternetHandler.staticLoop();
+				drawReturnButton(); // l'état de la souris est utile pour 
+				// surtout pas de Listeners.clearEvents(); c'est refreshFrameListenerEvents() qui s'en charge !
+				// seulement pour GameHandler : Listeners.frame_clearMouseSate();
+			}
+			
 			//myJt.repaint();
 			//myJt.paint(currentGraphics);
 			
@@ -234,6 +243,9 @@ public class GraphicsHandler extends Canvas {
 		   || (modeDeJeu == ModeDeJeu.RESEAU_LOCAL && RoomReseauLocalAttenteHandler.estLeServeur == false)) { // la partie est en réseau local mais je ne suis pas le serveur
 				RoomReseauLocalAttenteHandler.stopLocalServer(); // stopper le serveur local
 		}
+		if (modeDeJeu != ModeDeJeu.INTERNET) {
+			RoomInternetHandler.reinitialiserTout(false);
+		}
 		
 		currentRoomType = RoomType.PARTIE;
 		//GameHandler game = 
@@ -245,6 +257,7 @@ public class GraphicsHandler extends Canvas {
 		RoomReseauLocalAttenteHandler.setVisibleFields(false);
 		RoomReseauLocalAttenteHandler.stopLocalServer();
 		RoomReseauLocalAttenteHandler.closeAutreJoueurLocalTCPClient();
+		RoomInternetHandler.reinitialiserTout(false);
 		currentRoomType = RoomType.MENU_CHOIX_TYPE_PARTIE;
 		//Room1Handler room1Handler = 
 		new Room1Handler();
@@ -254,9 +267,20 @@ public class GraphicsHandler extends Canvas {
 		Listeners.clearEvents();
 		RoomReseauLocalAttenteHandler.stopLocalServer();
 		RoomReseauLocalAttenteHandler.closeAutreJoueurLocalTCPClient();
+		RoomInternetHandler.reinitialiserTout(false);
 		currentRoomType = RoomType.MENU_RESEAU_LOCAL;
 		RoomReseauLocalAttenteHandler.setVisibleFields(true);
 		RoomReseauLocalAttenteHandler.startLocalServer();
+	}
+
+	public static void roomGoTo_internet() {
+		Listeners.clearEvents();
+		RoomReseauLocalAttenteHandler.setVisibleFields(false);
+		RoomReseauLocalAttenteHandler.stopLocalServer();
+		RoomReseauLocalAttenteHandler.closeAutreJoueurLocalTCPClient();
+		RoomInternetHandler.reinitialiserTout(true);
+		RoomInternetHandler.loadImages();
+		currentRoomType = RoomType.MENU_INTERNET;
 	}
 	
 	public static void drawReturnButton() {
@@ -284,8 +308,20 @@ public class GraphicsHandler extends Canvas {
 		if (changeRoom) {
 			switch (currentRoomType) {
 			case MENU_CHOIX_TYPE_PARTIE : break;
-			case PARTIE : roomGoTo_menuChoixTypePartie(); break;
+			case PARTIE :
+				if (GameHandler.partieActuelle != null) { // partie actuelle doit être non nulle, normalement.
+					if (GameHandler.partieActuelle.modeDeJeu != ModeDeJeu.INTERNET) { // pas jeu sur internet : je retourne à la sélection des parties
+						roomGoTo_menuChoixTypePartie();
+					} else { // jeu sur internet : je retourne à la salle internet, j'interromps la partie actuelle avec mon adversaire (avec malus de points etc.)
+						RoomInternetHandler.quitterPartieEnCours();
+						roomGoTo_internet();
+					}
+				} else { // ne deverait jamais arriver normalement, que partieActuelle == null
+					roomGoTo_menuChoixTypePartie();
+				}
+				break;
 			case MENU_RESEAU_LOCAL : roomGoTo_menuChoixTypePartie(); break;
+			case MENU_INTERNET : roomGoTo_menuChoixTypePartie(); break;
 			}
 		}
 		//

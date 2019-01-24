@@ -216,6 +216,7 @@ public class TCPClient {
 	public void stop() {
 		if (myThread != null)
 			myThread.stop();
+		myThread = null;
 	}
 	
 	
