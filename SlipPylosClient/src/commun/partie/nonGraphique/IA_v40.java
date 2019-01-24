@@ -93,6 +93,7 @@ class IA_v40_coupAction {
 // Un coup joué par l'IA (ou une simulation du joueur par l'IA), i.e. toutes les actions faites dans l'ordre par l'IA
 class IA_v40_coup {
 	
+	public TeamType equipeQuiJoueLeCoup = TeamType.INVALIDE; // utile pour la sauvegarde/chargement des parties : afficher les coups d'une partie
 	public IA_v40_poserPion pionAPoserOuDeplacer;
 	// dans pionAPoserOuDeplacer : public boolean doitReprendrePionsEnsuite = false; // true si je viens de faire un carré ou une ligne
 	public ArrayList<IA_v40_peutRecupererCePion> listePionsARecuperer = null; // créé si je reprends 1 ou + pions (et donc que doitReprendrePionsEnsuite == true)

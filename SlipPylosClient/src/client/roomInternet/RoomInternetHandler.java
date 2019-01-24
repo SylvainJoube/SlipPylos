@@ -133,6 +133,7 @@ public class RoomInternetHandler {
 	/** Fonction exécutée depuis GraphicsHandler.loop()
 	 */
 	public void loop() {
+		
 		// 1) Se connecter au serveur, vérifier que la connexion est valide
 		// 2) 
 		if (etapeConnexion == 0) loop_etape0(); // Connexion initialie au serveur
@@ -143,6 +144,7 @@ public class RoomInternetHandler {
 		if (etapeConnexion == 5) loop_etape5(); // Attente de la réponse du serveur (identifiants valides ou non)
 		if (etapeConnexion == 6) loop_etape6(); // Bien authentifié au serveur !
 		
+		if (etapeConnexion > 3) if (loop_connectionLost()) return;
 		
 		loopGraphique();
 	}
@@ -344,6 +346,7 @@ public class RoomInternetHandler {
 	
 	private void loopGraphique() {
 		
+		// Dessin des boutons, choix 
 	}
 	
 	// Appelé depuis GraphicsHandler.roomGoTo_internet();
@@ -356,6 +359,7 @@ public class RoomInternetHandler {
 		spr_InternetTrouverPartieClasseeIA = RessourceManager.LoadImage("images/InternetTrouverPartieClasseeIA.png");
 		
 	}
+	
 	
 }
 
