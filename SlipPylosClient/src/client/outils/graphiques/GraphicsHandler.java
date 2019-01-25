@@ -36,7 +36,7 @@ import client.roomReseauLocalAttente.RoomReseauLocalAttenteHandler;
 import commun.partie.nonGraphique.ModeDeJeu;
 import commun.partie.nonGraphique.TeamType;
 
-
+/* TEST !
 class AsynchronousBu implements Runnable {
 	
 	@Override
@@ -62,7 +62,7 @@ class AsynchronousBu implements Runnable {
 		
 		String test1 = JOptionPane.showInputDialog("Please input mark for test 1: ");
 	}
-}
+}*/
 
 /** Classe s'occupant de la fenêtre de l'application
  * D'autres classes, comme GameHandler, dessinent dans et via GraphicsHandler.
@@ -73,8 +73,8 @@ public class GraphicsHandler extends Canvas {
 	
 	/** The strategy that allows us to use accelerate page flipping */
 	private BufferStrategy currentBufferStrategy;
-	static public final int windowWidth = 1200;
-	static public final int windowHeight = 800;
+	static public final int windowWidth = 1000;
+	static public final int windowHeight = 640;
 	
 	public AtomicBoolean gameRunning = new AtomicBoolean(true);
 	private Graphics2D currentGraphics = null;
@@ -328,12 +328,50 @@ public class GraphicsHandler extends Canvas {
 		
 	}
 	private void drawRoomName() {
+		
+		String roomNameAsString = "salle inconnue";
+		switch (currentRoomType) {
+		case PARTIE :
+			if (GameHandler.partieActuelle != null) {
+				switch (GameHandler.partieActuelle.modeDeJeu) {
+				case SOLO_LOCAL :
+					roomNameAsString = "Partie en solo contre IA";
+					break;
+				case HOT_SEAT :
+					roomNameAsString = "Partie en hot seat";
+					break;
+				case RESEAU_LOCAL :
+					roomNameAsString = "Partie en réseau local";
+					break;
+				case INTERNET :
+					roomNameAsString = "Partie sur Internet !";
+					break;
+				}
+			}
+			break;
+		case MENU_CHOIX_TYPE_PARTIE :
+			roomNameAsString = "Choix du type de partie";
+			break;
+		case MENU_RESEAU_LOCAL :
+			roomNameAsString = "Jeu en réseau local";
+			break;
+		case MENU_INTERNET :
+			roomNameAsString = "Jeu sur internet";
+			break;
+		}
+		
+		
 		// currentRoomName  currentGraphics
 		if (currentGraphics == null) return;
-		int xRoomName = 150;
-		int yRoomName = 26;
+		int xRoomName = 250;
+		int yRoomName = 50;
 		currentGraphics.setFont(new Font("TimesRoman", Font.PLAIN, 40)); 
-		currentGraphics.drawString(currentRoomName, xRoomName, yRoomName);
+		currentGraphics.drawString(roomNameAsString, xRoomName, yRoomName);
+		//currentRoomName
+		
+		
+		
+		
 		
 	}
 	

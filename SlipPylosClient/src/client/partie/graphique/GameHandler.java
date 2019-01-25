@@ -1,6 +1,7 @@
 package client.partie.graphique;
 
 import java.awt.Color;
+import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics2D;
 import java.awt.Image;
@@ -66,11 +67,24 @@ public class GameHandler {
 	public int lastMouseX = 0;
 	public int lastMouseY = 0;
 	
+	public final GameHandlerInternet gameHandlerInternet_instance;
+	
 	/** Constructeur, crée l'objet partie
 	 */
 	public GameHandler(ModeDeJeu arg_modeDeJeu, TeamType cEstLeTourDe, TeamType equipeJoueurActuel) {
 		GameHandler.jeuActuel = this;
-		GameHandler.partieActuelle = new PylosPartie(arg_modeDeJeu, cEstLeTourDe, equipeJoueurActuel); // créer la partie avant les Listener
+		TCPClient autreJoueurTCPLocal = null;
+		if (arg_modeDeJeu == ModeDeJeu.RESEAU_LOCAL) {
+			autreJoueurTCPLocal = RoomReseauLocalAttenteHandler.autreJoueurLocalTCPClient;
+		}
+		GameHandler.partieActuelle = new PylosPartie(arg_modeDeJeu, cEstLeTourDe, equipeJoueurActuel, autreJoueurTCPLocal, false); // créer la partie avant les Listener
+		
+		if (arg_modeDeJeu == ModeDeJeu.INTERNET) {
+			gameHandlerInternet_instance = new GameHandlerInternet(this);
+		} else {
+			gameHandlerInternet_instance = null;
+		}
+		
 	}
 	
 	/*public void setAsCurrentRoom() {
@@ -156,11 +170,14 @@ public class GameHandler {
 	}
 	
 	// Dessin du jeton avec écrit le nombre de jetons restants dessus
-	public void drawJetonNb(Graphics2D g, Image jetonImage, int nb, int x, int y, Color fontColor, boolean highlight) {
+	public void drawJetonNb(Graphics2D g, Image jetonImage, int nb, int x, int y, Color fontColor, boolean highlight, TeamType team) {
 		if (jetonImage == null)
 			return;
 		String nbStr;
 		nbStr = Integer.toString(nb);
+
+		g.setFont(new Font("TimesRoman", Font.BOLD, 26)); 
+		
 		FontMetrics fMetrics = g.getFontMetrics();
 		int strWidth  = fMetrics.stringWidth(nbStr);
 		int strHeight = fMetrics.getHeight();
@@ -182,9 +199,53 @@ public class GameHandler {
 			PImage.drawImageAlpha(GraphicsHandler.getMainGraphics(), jetonHighlightImg, x, y, jetonHighlightAlpha);
 		}
 		
+
+		String writeString = "";
+		String writeString2 = "";
+		
+		if (partieActuelle.tourDe == team) {
+			if (partieActuelle.equipeJoueur == team) {
+				writeString = "C'est à vous de jouer !";
+				writeString2 = "Vous êtes la couleur " + team.asString();
+			} else {
+				writeString = "";
+			}
+			
+		} else {
+			
+			if (partieActuelle.equipeJoueur == team) {
+				writeString = "Patientez... L'autre joueur joue.";
+				writeString2 = "Vous êtes la couleur " + team.asString();
+			} else {
+				writeString = "";
+			}
+			
+		}
+		
+		String writeString3 = "";
+		
+		if (team == partieActuelle.equipeJoueur && partieActuelle.modeDeJeu != ModeDeJeu.HOT_SEAT) {
+			if (partieActuelle.pyramideRemplie()) {
+				if (partieActuelle.equipeGagnante() == partieActuelle.equipeJoueur) {
+					writeString3 = "BRAVO ! Vous avez gagné !";
+				} else {
+					writeString3 = "Oh :'( Vous avez perdu.";
+				}
+				
+			}
+			
+			
+		}
+		
+		
 		Color oldColor = g.getColor();
+		g.setColor(Color.white);
+		//g.drawString(writeString, imageCenter.x - strWidthHalf, imageCenter.y - strHeightHalf);
+		g.drawString(writeString, 460, 200);
+		g.drawString(writeString2, 460, 240);
+		g.drawString(writeString3, 460, 280);
 		g.setColor(fontColor);
-		g.drawString(nbStr, imageCenter.x - strWidthHalf, imageCenter.y - strHeightHalf);
+		g.drawString(nbStr, imageCenter.x - strWidthHalf, imageCenter.y ); //- strHeightHalf
 		g.setColor(oldColor);
 		
 	} // g.getFontMetrics().stringWidth(message)
@@ -233,8 +294,8 @@ public class GameHandler {
 			yDessinJetonsJoueur = yBlanc;
 		}
 		
-		drawJetonNb(currentGraphics, jetonNoirImg, partieActuelle.nbJetonsNoir, xNoir, yNoir, Color.WHITE, partieActuelle.tourDe == TeamType.NOIR);
-		drawJetonNb(currentGraphics, jetonBlancImg, partieActuelle.nbJetonsBlanc, xBlanc, yBlanc, Color.BLACK, partieActuelle.tourDe == TeamType.BLANC);
+		drawJetonNb(currentGraphics, jetonNoirImg, partieActuelle.nbJetonsNoir, xNoir, yNoir, Color.WHITE, partieActuelle.tourDe == TeamType.NOIR, TeamType.NOIR);
+		drawJetonNb(currentGraphics, jetonBlancImg, partieActuelle.nbJetonsBlanc, xBlanc, yBlanc, Color.BLACK, partieActuelle.tourDe == TeamType.BLANC, TeamType.BLANC);
 		if (highlightPionSelecton) {
 			if (partieActuelle.equipeJoueur == TeamType.BLANC) {
 				PImage.drawImageAlpha(currentGraphics, jetonHighlightImg, xBlanc, yBlanc, 1);
@@ -387,77 +448,6 @@ public class GameHandler {
 		}
 	}
 	
-	private void loop_envoyerAuServeurInternet() {
-		if (partieActuelle.modeDeJeu != ModeDeJeu.INTERNET) return;
-		if (RoomInternetHandler.instance.loop_connectionLost()) return; // perte de la connexion au serveur
-		
-		int nbMessagesEnvoyer = partieActuelle.listeDeMessagesAEnvoyerAuxJoueurs.size();
-		for (int iMessage = 0; iMessage < nbMessagesEnvoyer; iMessage++) {
-			NetBuffer coupAsBuffer = partieActuelle.listeDeMessagesAEnvoyerAuxJoueurs.get(iMessage);
-			byte[] coupAsByteArray = coupAsBuffer.convertToByteArray(); // j'aurais aussi pu tout regrouper... !
-			NetBuffer messageAEnvoyer = new NetBuffer();
-			messageAEnvoyer.writeInt(100);
-			messageAEnvoyer.writeByteArray(coupAsByteArray);
-			RoomInternetHandler.instance.clientTCP.sendMessage(messageAEnvoyer);
-			System.out.println("GameHandler.loop_envoyerAuServeurInternet : envoyer une action simple !!");
-		}
-		partieActuelle.listeDeMessagesAEnvoyerAuxJoueurs.clear();
-	}
-	
-	private void loop_recevoirDuServeurInternet() {
-		if (partieActuelle.modeDeJeu != ModeDeJeu.INTERNET) return;
-		if (RoomInternetHandler.instance.loop_connectionLost()) return; // perte de la connexion au serveur
-		
-		for (int miniI = 0; miniI < 100; miniI++) {
-			NetBuffer nouveauMessage = RoomInternetHandler.instance.clientTCP.getNewMessage();
-			if (nouveauMessage == null) break;
-			int messageType = nouveauMessage.readInt();
-			
-			// Recevoir un nouveau coup joué
-			if (messageType == 100) {
-				byte[] actionAsByteArray = nouveauMessage.readByteArray();
-				NetBuffer actionAsNetBuffer = new NetBuffer(actionAsByteArray);
-				// Maintenant, faire jouer le coup :
-				PylosPartie_actionSimple actionSimple = PylosPartie_actionSimple.readFromNetBuffer(actionAsNetBuffer);
-				
-				loop_recevoirDuServeurInternet_traiterAction(actionSimple);
-				System.out.println("GameHandler.loop_recevoirDuServeurInternet : recevoir une action simple !!");
-				
-				
-			}
-			
-			
-			
-		}
-	}
-	
-	private void loop_recevoirDuServeurInternet_traiterAction(PylosPartie_actionSimple actionSimple) {
-		
-		//System.out.println("GameHandler.loopReseauLocal, message reçu : messageID = " + messageID);
-		
-		if (actionSimple.typeAction == 0) { // poser un pion à partir de sa réserve
-			TeamType equipeQuiJoueLeCoup = actionSimple.equipeQuiJoueLeCoup;
-			partieActuelle.poseUnPionDeSaReserve(equipeQuiJoueLeCoup, actionSimple.hauteur, actionSimple.xCell, actionSimple.yCell);
-		}
-		
-		if (actionSimple.typeAction == 1) { // déplacer un pion
-			TeamType equipeQuiJoueLeCoup = actionSimple.equipeQuiJoueLeCoup;
-			partieActuelle.deplacerUnPion(equipeQuiJoueLeCoup, actionSimple.hauteur, actionSimple.xCell, actionSimple.yCell, actionSimple.hauteur_init, actionSimple.xCell_init, actionSimple.yCell_init);
-		}
-		
-		if (actionSimple.typeAction == 2) { // reprendre un pion
-			TeamType equipeQuiJoueLeCoup = actionSimple.equipeQuiJoueLeCoup;
-			partieActuelle.reprendUnPion(equipeQuiJoueLeCoup, actionSimple.hauteur, actionSimple.xCell, actionSimple.yCell);
-		}
-		
-		if (actionSimple.typeAction == 3) { // passer son tour
-			partieActuelle.tourSuivant();
-		}
-		
-		
-		
-	}
-	
 	// Sera appelé par GraphicsHandler
 	public static void staticGameLoop() {
 		if (GameHandler.jeuActuel == null) return;
@@ -467,7 +457,7 @@ public class GameHandler {
 	// Sera appelé par GraphicsHandler
 	public void gameLoop() {
 		currentGraphics = GraphicsHandler.getMainGraphics();
-
+		
 		GameEventHandler.staticLoop();
 		// Chargement des images nécessaires à l'affichage
 		loadImages();
@@ -477,6 +467,8 @@ public class GameHandler {
 		drawGridLines();
 		// Affichage des pions 1 à 1 pour l'IA
 		partieActuelle.actionsGraphiques_loopEffectuerAction();
+		// Pour afficher lentement les actions de l'IA
+		partieActuelle.actionsGraphiques_loopJeuIA();
 		// Dessin des pions dans la grille
 		drawPawnsOnGrid();
 		// Dessin de la future position du pion à poser
@@ -485,21 +477,10 @@ public class GameHandler {
 		drawTourSuivant();
 		// Boucle si le jeu est en réseau local
 		loopReseauLocal();
+		// Boucle pour gérer les échanges avec le serveru internet
+		loopJeuInternet();
 		
-		if (RoomInternetHandler.instance.loop_connectionLost() == false) { // perte de la connexion au serveur
-			// Si jeu sur intenet, envoyer les coups
-			partieActuelle.loop_envoyerAuTCPInternet(RoomInternetHandler.instance.clientTCP);
-			// Si jeu sur intenet, recevoir les coups
-			ArrayList<NetBuffer> listeMessageATraiter = new ArrayList<NetBuffer>();
-			partieActuelle.loop_recevoirDeTCPInternet(RoomInternetHandler.instance.clientTCP, listeMessageATraiter); // loop_recevoirDuServeurInternet
-			
-			for (int iMessageATraiter = 0; iMessageATraiter < listeMessageATraiter.size(); iMessageATraiter++) {
-				NetBuffer message = listeMessageATraiter.get(iMessageATraiter);
-				// traiter le message du serveur : déconnexion autre joueur, fin de partie...
-				
-			}
-			
-		}
+		
 		
 		
 		
@@ -584,37 +565,34 @@ public class GameHandler {
 						System.err.println("ERREUR GRAVE GameHaldler.mouseReleased : volonteJoueur == DEPLACER_UN_PION et dragCell == null.");
 						return;
 					}
-					GameHandler.partieActuelle.deplacerUnPion(equipeJoueur, essayerDePoserPionIci.hauteur, essayerDePoserPionIci.xCell, essayerDePoserPionIci.yCell, dragCell.hauteur, dragCell.xCell, dragCell.yCell);
+					if (partieActuelle.modeDeJeu == ModeDeJeu.INTERNET) {
+						internet_demandeDeplacementPion(equipeJoueur, essayerDePoserPionIci.hauteur, essayerDePoserPionIci.xCell, essayerDePoserPionIci.yCell, dragCell.hauteur, dragCell.xCell, dragCell.yCell);
+					} else {
+						GameHandler.partieActuelle.deplacerUnPion(equipeJoueur, essayerDePoserPionIci.hauteur, essayerDePoserPionIci.xCell, essayerDePoserPionIci.yCell, dragCell.hauteur, dragCell.xCell, dragCell.yCell);
+					}
 					if (partieActuelle.modeDeJeu == ModeDeJeu.RESEAU_LOCAL) reseauLocal_deplacePion(essayerDePoserPionIci.hauteur, essayerDePoserPionIci.xCell, essayerDePoserPionIci.yCell, dragCell.hauteur, dragCell.xCell, dragCell.yCell);
 					break;
 				case PION_EN_MAIN_DEPUIS_RESERVE :
-					GameHandler.partieActuelle.poseUnPionDeSaReserve(equipeJoueur, essayerDePoserPionIci.hauteur, essayerDePoserPionIci.xCell, essayerDePoserPionIci.yCell);
+					if (partieActuelle.modeDeJeu == ModeDeJeu.INTERNET) {
+						internet_demandePoserPionDeReserve(equipeJoueur, essayerDePoserPionIci.hauteur, essayerDePoserPionIci.xCell, essayerDePoserPionIci.yCell);
+					} else {
+						GameHandler.partieActuelle.poseUnPionDeSaReserve(equipeJoueur, essayerDePoserPionIci.hauteur, essayerDePoserPionIci.xCell, essayerDePoserPionIci.yCell);
+					}
+					
+					
 					if (partieActuelle.modeDeJeu == ModeDeJeu.RESEAU_LOCAL) reseauLocal_posePionDeSaReserve(essayerDePoserPionIci.hauteur, essayerDePoserPionIci.xCell, essayerDePoserPionIci.yCell);
 					break;
 				default : break;
 				}
 				
+				/*fonctions : 
+				internet_demandeDeplacementPion(equipeJoueur, essayerDePoserPionIci.hauteur, essayerDePoserPionIci.xCell, essayerDePoserPionIci.yCell, dragCell.hauteur, dragCell.xCell, dragCell.yCell);
+				GameHandler.partieActuelle.deplacerUnPion(equipeJoueur, essayerDePoserPionIci.hauteur, essayerDePoserPionIci.xCell, essayerDePoserPionIci.yCell, dragCell.hauteur, dragCell.xCell, dragCell.yCell);
+				internet_demandePoserPionDeReserve(equipeJoueur, essayerDePoserPionIci.hauteur, essayerDePoserPionIci.xCell, essayerDePoserPionIci.yCell);
+				GameHandler.partieActuelle.poseUnPionDeSaReserve(equipeJoueur, essayerDePoserPionIci.hauteur, essayerDePoserPionIci.xCell, essayerDePoserPionIci.yCell);
+				internet_demandeReprendreUnPion(partieActuelle.equipeJoueur, pickUpCell.hauteur, pickUpCell.xCell, pickUpCell.yCell);
+				partieActuelle.reprendUnPion(partieActuelle.equipeJoueur, pickUpCell.hauteur, pickUpCell.xCell, pickUpCell.yCell, false);*/
 				
-				/* mis dans PylosPartie
-				GameHandler.partieActuelle.setCell(essayerDePoserPionIci.hauteur, essayerDePoserPionIci.xCell, essayerDePoserPionIci.yCell, equipeJoueur);
-				GameHandler.partieActuelle.joueurAJoueUnPion = true;
-				
-				if (GameHandler.jeuActuel.volonteJoueur != VolonteJoueur.DEPLACER_UN_PION) {
-					if (equipeJoueur == TeamType.BLANC) GameHandler.partieActuelle.nbJetonsBlanc--;
-					if (equipeJoueur == TeamType.NOIR)  GameHandler.partieActuelle.nbJetonsNoir--;
-				} else {
-					// Je supprime l'ancien pion
-					PylosCell dragCell = GameHandler.jeuActuel.dragCell;
-					GameHandler.partieActuelle.setCell(dragCell.hauteur, dragCell.xCell, dragCell.yCell, TeamType.AUCUNE);
-				}
-				
-				if (GameHandler.partieActuelle.plateauActuel.willFormSameColorRectangle(essayerDePoserPionIci.hauteur, essayerDePoserPionIci.xCell, essayerDePoserPionIci.yCell, equipeJoueur)) {
-					GameHandler.partieActuelle.peutReprendrePionsNb = 2;
-				}
-				//GameHandler.partieActuelle.tourSuivant();
-				if (GameHandler.partieActuelle.nbJetonsBlanc == 0 || GameHandler.partieActuelle.nbJetonsNoir == 0) {
-					GameHandler.partieActuelle.tourSuivant();
-				}*/
 			}
 		}
 		
@@ -623,9 +601,13 @@ public class GameHandler {
 				// Reprendre ce pion
 				PylosCell pickUpCell = jeuActuel.pickUpCell;
 				
-				partieActuelle.reprendUnPion(partieActuelle.equipeJoueur, pickUpCell.hauteur, pickUpCell.xCell, pickUpCell.yCell);
-				if (partieActuelle.modeDeJeu == ModeDeJeu.RESEAU_LOCAL) reseauLocal_reprendUnPion(pickUpCell.hauteur, pickUpCell.xCell, pickUpCell.yCell);
+				if (partieActuelle.modeDeJeu == ModeDeJeu.INTERNET) {
+					internet_demandeReprendreUnPion(partieActuelle.equipeJoueur, pickUpCell.hauteur, pickUpCell.xCell, pickUpCell.yCell);
+				} else {
+					partieActuelle.reprendUnPion(partieActuelle.equipeJoueur, pickUpCell.hauteur, pickUpCell.xCell, pickUpCell.yCell, false);
+				}
 				
+				if (partieActuelle.modeDeJeu == ModeDeJeu.RESEAU_LOCAL) reseauLocal_reprendUnPion(pickUpCell.hauteur, pickUpCell.xCell, pickUpCell.yCell);
 				/*GameHandler.partieActuelle.setCell(pickUpCell.hauteur, pickUpCell.xCell, pickUpCell.yCell, TeamType.AUCUNE);
 				TeamType equipeJoueur = GameHandler.partieActuelle.equipeJoueur;
 				if (equipeJoueur == TeamType.BLANC) GameHandler.partieActuelle.nbJetonsBlanc++;
@@ -645,7 +627,9 @@ public class GameHandler {
 		
 		GameHandler.jeuActuel.dragCell = null;
 		GameHandler.jeuActuel.refreshWithMousePosition();
-		partieActuelle.tourSuivant_automatique();
+		if (partieActuelle.modeDeJeu != ModeDeJeu.INTERNET) { // c'est le serveur qui envoie si internet
+			partieActuelle.tourSuivant_automatique();
+		}
 	}
 	
 
@@ -694,11 +678,11 @@ public class GameHandler {
 			int xCell = receivedMessage.readInt();
 			int yCell = receivedMessage.readInt();
 			TeamType equipeAutreJoueur = partieActuelle.getEquipeAdverse();
-			partieActuelle.reprendUnPion(equipeAutreJoueur, hauteur, xCell, yCell);
+			partieActuelle.reprendUnPion(equipeAutreJoueur, hauteur, xCell, yCell, false);
 		}
 
 		if (messageID == 4) { // passer son tour
-			partieActuelle.tourSuivant();
+			partieActuelle.tourSuivant(false); // ne pas ré-envoyer
 		}
 	}
 	
@@ -762,6 +746,243 @@ public class GameHandler {
 		message.writeInt(4);
 		reseauLocal_envoieMessage(message);
 	}
+	
+	private void internet_envoyerCoup() {
+		NetBuffer message = new NetBuffer();
+		message.writeInt(110);
+		
+	}
+	
+
+	private void internet_demandePoserPionDeReserve(TeamType equipeJoueur, int hauteur, int xCell, int yCell) {
+
+		NetBuffer message = new NetBuffer();
+		message.writeInt(110);
+		message.writeInt(partieActuelle.numeroDeTour);
+		message.writeInt(equipeJoueur.asInt);
+		message.writeInt(hauteur);
+		message.writeInt(xCell);
+		message.writeInt(yCell);
+		//message.writeBool(false);
+		
+		TCPClient clientTCP = RoomInternetHandler.instance.clientTCP;
+		clientTCP.sendMessage(message);
+		
+		// Réception :
+		// GameHandler.partieActuelle.poseUnPionDeSaReserve(equipeJoueur, essayerDePoserPionIci.hauteur, essayerDePoserPionIci.xCell, essayerDePoserPionIci.yCell);
+	}
+	
+	private void internet_demandeDeplacementPion(TeamType equipeJoueur, int hauteur, int xCell, int yCell, int hauteur_init, int xCell_init, int yCell_init) {
+
+		NetBuffer message = new NetBuffer();
+		message.writeInt(111);
+		message.writeInt(partieActuelle.numeroDeTour);
+		message.writeInt(equipeJoueur.asInt);
+		message.writeInt(hauteur);
+		message.writeInt(xCell);
+		message.writeInt(yCell);
+		//message.writeBool(true);
+		message.writeInt(hauteur_init);
+		message.writeInt(xCell_init);
+		message.writeInt(yCell_init);
+		
+		TCPClient clientTCP = RoomInternetHandler.instance.clientTCP;
+		clientTCP.sendMessage(message);
+		
+		// Réception :
+		// GameHandler.partieActuelle.deplacerUnPion(equipeJoueur, essayerDePoserPionIci.hauteur, essayerDePoserPionIci.xCell, essayerDePoserPionIci.yCell, dragCell.hauteur, dragCell.xCell, dragCell.yCell);
+	}
+	
+	
+	private void internet_demandeReprendreUnPion(TeamType equipeJoueur, int hauteur, int xCell, int yCell) {
+
+		NetBuffer message = new NetBuffer();
+		message.writeInt(112);
+		message.writeInt(partieActuelle.numeroDeTour);
+		message.writeInt(equipeJoueur.asInt);
+		message.writeInt(hauteur);
+		message.writeInt(xCell);
+		message.writeInt(yCell);
+		message.writeBool(false);
+		
+		TCPClient clientTCP = RoomInternetHandler.instance.clientTCP;
+		clientTCP.sendMessage(message);
+		
+		// Réception :
+		// partieActuelle.reprendUnPion(partieActuelle.equipeJoueur, pickUpCell.hauteur, pickUpCell.xCell, pickUpCell.yCell);
+	}
+	
+	
+	private void loopJeuInternet() {
+		if (partieActuelle.modeDeJeu != ModeDeJeu.INTERNET) return;
+		
+		if (RoomInternetHandler.instance.loop_connectionLost()) { // perte de la connexion au serveur
+			GraphicsHandler.roomGoTo_menuChoixTypePartie(); // => retour au menu de choix des parties
+			return;
+		}
+		
+		TCPClient clientTCP = RoomInternetHandler.instance.clientTCP;
+		// - Déconnexion de l'autre joueur (ou il quitte la partie)
+		// - recevoir un coup
+		
+		for (int iMsg = 0; iMsg < 100; iMsg++) {
+			NetBuffer messageRecu = clientTCP.getNewMessage();
+			if (messageRecu == null) break;
+			internet_traiterMessage(messageRecu);
+		}
+		
+		
+		
+		
+		/* OBSOLETE !
+		// Si jeu sur intenet, envoyer les coups
+		partieActuelle.loop_envoyerAuTCPInternet(RoomInternetHandler.instance.clientTCP);
+		// Si jeu sur intenet, recevoir les coups
+		ArrayList<NetBuffer> listeMessageATraiter = new ArrayList<NetBuffer>();
+		partieActuelle.loop_recevoirDeTCPInternet(RoomInternetHandler.instance.clientTCP, listeMessageATraiter); // loop_recevoirDuServeurInternet
+		
+		for (int iMessageATraiter = 0; iMessageATraiter < listeMessageATraiter.size(); iMessageATraiter++) {
+			NetBuffer message = listeMessageATraiter.get(iMessageATraiter);
+			// traiter le message du serveur : déconnexion autre joueur, fin de partie...
+			
+		}
+		*/
+	}
+	
+	
+	private void internet_traiterMessage(NetBuffer message) {
+		int messageType = message.readInt();
+		// /!\ Le client accepte sans remettre en question les données du serveur.
+		
+		System.out.println("GameHandler.internet_traiterMessage : messageType = " + messageType);
+		
+		// Poser un pion de la réserve (réussite, pas de message en cas d'erreur !)
+		if (messageType == 110) {
+			TeamType equipeQuiAJoue = TeamType.fromInt(message.readInt());
+			int hauteur = message.readInt();
+			int xCell = message.readInt();
+			int yCell = message.readInt();
+			NetBuffer variablesImportantesPartie = new NetBuffer(message.readByteArray());
+			
+			partieActuelle.setCell(hauteur, xCell, yCell, equipeQuiAJoue);
+			partieActuelle.lireVariablesPrincipales(variablesImportantesPartie);
+			
+		}
+
+		// Déplacer un pion (réussite, pas de message en cas d'erreur !)
+		if (messageType == 111) {
+			TeamType equipeQuiAJoue = TeamType.fromInt(message.readInt());
+			int hauteur = message.readInt();
+			int xCell = message.readInt();
+			int yCell = message.readInt();
+
+			int hauteur_init = message.readInt();
+			int xCell_init = message.readInt();
+			int yCell_init = message.readInt();
+			NetBuffer variablesImportantesPartie = new NetBuffer(message.readByteArray());
+
+			partieActuelle.setCell(hauteur, xCell, yCell, equipeQuiAJoue);
+			partieActuelle.setCell(hauteur_init, xCell_init, yCell_init, TeamType.AUCUNE);
+			partieActuelle.lireVariablesPrincipales(variablesImportantesPartie);
+			
+		}
+		
+		
+		
+
+		// Reprendre un pion (réussite, pas de message en cas d'erreur !)
+		if (messageType == 112) {
+			TeamType equipeQuiAJoue = TeamType.fromInt(message.readInt());
+			int hauteur = message.readInt();
+			int xCell = message.readInt();
+			int yCell = message.readInt();
+			NetBuffer variablesImportantesPartie = new NetBuffer(message.readByteArray());
+			
+			partieActuelle.setCell(hauteur, xCell, yCell, TeamType.AUCUNE);
+			partieActuelle.lireVariablesPrincipales(variablesImportantesPartie);
+			
+		}
+		
+		
+	}
+	
+	
+	
+	/* OBSOLETE
+	private void loop_envoyerAuServeurInternet() {
+		if (partieActuelle.modeDeJeu != ModeDeJeu.INTERNET) return;
+		if (RoomInternetHandler.instance.loop_connectionLost()) return; // perte de la connexion au serveur
+		
+		int nbMessagesEnvoyer = partieActuelle.listeDeMessagesAEnvoyerAuxJoueurs.size();
+		for (int iMessage = 0; iMessage < nbMessagesEnvoyer; iMessage++) {
+			NetBuffer coupAsBuffer = partieActuelle.listeDeMessagesAEnvoyerAuxJoueurs.get(iMessage);
+			byte[] coupAsByteArray = coupAsBuffer.convertToByteArray(); // j'aurais aussi pu tout regrouper... !
+			NetBuffer messageAEnvoyer = new NetBuffer();
+			messageAEnvoyer.writeInt(100);
+			messageAEnvoyer.writeByteArray(coupAsByteArray);
+			RoomInternetHandler.instance.clientTCP.sendMessage(messageAEnvoyer);
+			System.out.println("GameHandler.loop_envoyerAuServeurInternet : envoyer une action simple !!");
+		}
+		partieActuelle.listeDeMessagesAEnvoyerAuxJoueurs.clear();
+	}
+	
+	private void loop_recevoirDuServeurInternet() {
+		if (partieActuelle.modeDeJeu != ModeDeJeu.INTERNET) return;
+		if (RoomInternetHandler.instance.loop_connectionLost()) return; // perte de la connexion au serveur
+		
+		for (int miniI = 0; miniI < 100; miniI++) {
+			NetBuffer nouveauMessage = RoomInternetHandler.instance.clientTCP.getNewMessage();
+			if (nouveauMessage == null) break;
+			int messageType = nouveauMessage.readInt();
+			
+			// Recevoir un nouveau coup joué
+			if (messageType == 100) {
+				byte[] actionAsByteArray = nouveauMessage.readByteArray();
+				NetBuffer actionAsNetBuffer = new NetBuffer(actionAsByteArray);
+				// Maintenant, faire jouer le coup :
+				PylosPartie_actionSimple actionSimple = PylosPartie_actionSimple.readFromNetBuffer(actionAsNetBuffer);
+				
+				loop_recevoirDuServeurInternet_traiterAction(actionSimple);
+				System.out.println("GameHandler.loop_recevoirDuServeurInternet : recevoir une action simple !!");
+				
+				
+			}
+			
+			
+			
+		}
+	}
+	
+	
+	private void loop_recevoirDuServeurInternet_traiterAction(PylosPartie_actionSimple actionSimple) {
+		
+		//System.out.println("GameHandler.loopReseauLocal, message reçu : messageID = " + messageID);
+		
+		if (actionSimple.typeAction == 0) { // poser un pion à partir de sa réserve
+			TeamType equipeQuiJoueLeCoup = actionSimple.equipeQuiJoueLeCoup;
+			partieActuelle.poseUnPionDeSaReserve(equipeQuiJoueLeCoup, actionSimple.hauteur, actionSimple.xCell, actionSimple.yCell);
+		}
+		
+		if (actionSimple.typeAction == 1) { // déplacer un pion
+			TeamType equipeQuiJoueLeCoup = actionSimple.equipeQuiJoueLeCoup;
+			partieActuelle.deplacerUnPion(equipeQuiJoueLeCoup, actionSimple.hauteur, actionSimple.xCell, actionSimple.yCell, actionSimple.hauteur_init, actionSimple.xCell_init, actionSimple.yCell_init);
+		}
+		
+		if (actionSimple.typeAction == 2) { // reprendre un pion
+			TeamType equipeQuiJoueLeCoup = actionSimple.equipeQuiJoueLeCoup;
+			partieActuelle.reprendUnPion(equipeQuiJoueLeCoup, actionSimple.hauteur, actionSimple.xCell, actionSimple.yCell);
+		}
+		
+		if (actionSimple.typeAction == 3) { // passer son tour
+			partieActuelle.tourSuivant();
+		}
+		
+	}*/
+	
+	public void drawImportantInfo() {
+		
+	}
+	
 	
 	
 }

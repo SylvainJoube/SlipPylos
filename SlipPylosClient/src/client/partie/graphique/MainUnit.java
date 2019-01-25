@@ -9,7 +9,6 @@ public class MainUnit {
 	public static void main(String[] args) throws Exception {
 		System.out.println("Lancement de l'application...");
 		
-		
 		//Room1Handler room1Handler = new Room1Handler();
 		
 		//GameHandler game = new GameHandler(ModeDeJeu.SOLO_LOCAL);

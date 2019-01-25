@@ -2,6 +2,7 @@ package server.main;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import server.database.Modele;
 import slip.network.tcp.TCPServer;
 
 /**
@@ -13,8 +14,13 @@ public class MainServerThread implements Runnable {
 	public static TCPServer serveurTCP;
 	public AtomicBoolean stillActive = new AtomicBoolean(true);
 	public AtomicBoolean hasToStop = new AtomicBoolean(false);
-	public static final int serverPort = 3393;
-
+	public static int serverPort;
+	
+	public MainServerThread(int arg_serverPort) {
+		serverPort = arg_serverPort;
+	}
+	
+	
 	@Override
 	public void run() {
 		
@@ -24,7 +30,7 @@ public class MainServerThread implements Runnable {
 			stillActive.set(false);
 			return;
 		}
-		System.out.println("MainServerThread.run : Serveur lancé, port " + serverPort);
+		System.out.println("MainServerThread.run : Serveur lancé, port " + serverPort +  "   hote = " + Modele.host);
 		
 		EcouteClients ecouterLesClients = new EcouteClients(serveurTCP);
 		GestionDesParties gestionDesParties = new GestionDesParties();
@@ -32,7 +38,7 @@ public class MainServerThread implements Runnable {
 		while (hasToStop.get() == false) {
 			
 			ecouterLesClients.loop();
-			gestionDesParties.loopParties();
+			gestionDesParties.loopGestionParties();
 			
 			try {
 				Thread.sleep(4);

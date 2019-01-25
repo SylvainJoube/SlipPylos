@@ -163,7 +163,7 @@ public class TCPServer {
 	 * @param forceRefresh forcer l'actualisation du nom d'hôte
 	 * @return null si erreur, ou une String du type 192.168.0.65
 	 */
-	public static String getLocalHostAddress(boolean forceRefresh) {
+	public static String getLocalHostAddressOLD(boolean forceRefresh) {
 		if (currentLocalHostAddress == null || forceRefresh) {
 			InetAddress addr;
 			try {
@@ -189,8 +189,12 @@ public class TCPServer {
 		return result;
 	}
 	
-	/*public static String getIPV4() {
-		
+	/** Récupère l'hôte local asscié à cet ordinateur. (exemple : 192.168.0.65)
+	 * @param forceRefresh forcer l'actualisation du nom d'hôte
+	 * @return null si erreur, ou une String, IPV4 du type 192.168.0.65
+	 */
+	public static String getLocalHostAddress(boolean forceRefresh) {
+		/*
 		try {
 			InetAddress addr = InetAddress.getLocalHost();
 
@@ -202,30 +206,38 @@ public class TCPServer {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		return null;
-		/*
-		if (false == true)
-	    try {
-	        Enumeration<NetworkInterface> net = NetworkInterface.getNetworkInterfaces();
-	        while (net.hasMoreElements()) {
-	            NetworkInterface networkInterface = net.nextElement();
-	            Enumeration<InetAddress> add = networkInterface.getInetAddresses();
-	            while (add.hasMoreElements()) {
-	                InetAddress a = add.nextElement();
-	                System.out.println("addresse n : " + a.getHostAddress());
-	                
-	                if (!a.isLoopbackAddress() && !a.getHostAddress().contains(":")) {
-	                        System.out.println("getIPV4 : " + a.getHostAddress());
-	                    return a.getHostAddress();
-	                }
-	            }
-	        }
-	    } catch (SocketException e) {
-	        e.printStackTrace();
-	    }
-	    return null;* /
-	}*/
-	
+		return null;*/
+		
+		if (currentLocalHostAddress == null || forceRefresh) {
+			
+		    try {
+		        Enumeration<NetworkInterface> net = NetworkInterface.getNetworkInterfaces();
+		        while (net.hasMoreElements()) {
+		            NetworkInterface networkInterface = net.nextElement();
+		            Enumeration<InetAddress> add = networkInterface.getInetAddresses();
+		            boolean hasToBreak = false;
+		            while (add.hasMoreElements()) {
+		                InetAddress a = add.nextElement();
+		                //System.out.println("TCPServer.getLocalHostAddress - addresse n : " + a.getHostAddress());
+		                
+		                if (!a.isLoopbackAddress() && !a.getHostAddress().contains(":")) {
+		                	//System.out.println("TCPServer.getLocalHostAddress - getIPV4 : " + a.getHostAddress());
+		                    currentLocalHostAddress = a.getHostAddress();
+		                    hasToBreak = true; // pour bien sortir des deux while
+		                    break;
+		                }
+		            }
+		            if (hasToBreak) break;
+		        }
+		    } catch (SocketException e) {
+		    	currentLocalHostAddress = null;
+		    	//e.printStackTrace();
+		    }
+		}
+		
+		return currentLocalHostAddress;
+		
+	}
 	
 	
 }

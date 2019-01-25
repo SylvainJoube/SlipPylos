@@ -19,6 +19,12 @@ public class PylosPartie {
 	public TeamType equipeJoueur = TeamType.BLANC;
 	public TeamType equipeIA = TeamType.NOIR; // si il y a une IA (solo local)
 	public PylosPartieVariante varianteDuJeu = PylosPartieVariante.JOUEURS_AVERTIS;
+	private TCPClient autreJoueurTCPLocal = null; // seulement utile en TCP local
+	
+	public int numeroDeTour = 0;
+	public boolean modeServeurInternet = false; // false si client, true si exécuté depuis le serveur
+	// + ici : variables nécessaires au serveur
+	
 	
 	// Pour une partie de type "INTERNET", chaque action est mise (dans le bon ordre !) dans la liste listeDeMessagesAEnvoyerAuxJoueurs.
 	// Ainsi, le serveur de jeu n'a qu'à récupérer le NetBuffer et vérifier si le coup est valide, puis à le ré-envoyer aux clients.
@@ -49,12 +55,14 @@ public class PylosPartie {
 	 * @param cEstLeTourDe
 	 * @param equipeJoueurActuel ma couleur, la couleur du joueur du client actuel
 	 */
-	public PylosPartie(ModeDeJeu arg_modeDeJeu, TeamType cEstLeTourDe, TeamType equipeJoueurActuel) { // constructeur
+	public PylosPartie(ModeDeJeu arg_modeDeJeu, TeamType cEstLeTourDe, TeamType equipeJoueurActuel, TCPClient arg_autreJoueurTCPLocal, boolean arg_modeServeurInternet) { // constructeur
 		plateauActuel = new PylosGridArray(nbCasesCote, this);
 		nbJetonsTotal = computeNbJetonsTotal();
 		nbJetonsBlanc = nbJetonsTotal / 2;
 		nbJetonsNoir = nbJetonsTotal / 2;
 		modeDeJeu = arg_modeDeJeu;
+		autreJoueurTCPLocal = arg_autreJoueurTCPLocal;
+		modeServeurInternet = arg_modeServeurInternet;
 		
 		tourDe = cEstLeTourDe;
 		if (tourDe != TeamType.NOIR && tourDe != TeamType.BLANC) // erreur dans l'équipe qui doit jouer
@@ -102,6 +110,10 @@ public class PylosPartie {
 	}
 	
 	public boolean tourSuivant() {
+		return tourSuivant(true);
+	}
+	
+	public boolean tourSuivant(boolean sendToLocalNetwork /* = false en valeur défaut*/) {
 		//System.out.println("PylosPartie.tourSuivant : tourDe = " + tourDe);
 		if (nbJetonsBlanc <= 0 && nbJetonsNoir <= 0) return false; // fin de la partie !
 		
@@ -146,6 +158,7 @@ public class PylosPartie {
 		
 		peutReprendrePionsNb = 0;
 		joueurAJoueUnPion = false;
+		numeroDeTour++;
 		
 		boolean passerLeTourDuJoueurSuivant = false;
 		// Si le joueur actuel a encore des pions et a joué, et que le joueur suivant n'a plus de pions : c'est à nouveau le tour du joueur actuel.
@@ -165,13 +178,13 @@ public class PylosPartie {
 				tourDe = TeamType.BLANC;
 
 			//IA_v40.listerTousLesCoupsPossiblesCeTour(plateauActuel, tourDe);
-		}
+		} else numeroDeTour++; // deux tours en un seul
 		
 		PylosPartie_actionSimple actionActuelle = new PylosPartie_actionSimple(3);
 		NetBuffer actionPasserleTour = actionActuelle.writeToNetBuffer();
 		listeDeMessagesAEnvoyerAuxJoueurs.add(actionPasserleTour);
 		
-		
+		//System.out.println("PylosPartie.tourSuivant : passerLeTourDuJoueurSuivant = " + passerLeTourDuJoueurSuivant);
 		
 		
 		/*if (modeDeJeu == ModeDeJeu.SOLO_LOCAL) {
@@ -187,12 +200,32 @@ public class PylosPartie {
 			tourSuivant();
 		}*/
 		
+		if (sendToLocalNetwork && modeDeJeu == ModeDeJeu.RESEAU_LOCAL) {
+			if (autreJoueurTCPLocal == null) {
+				// erreur
+				System.out.println("ERREUR : PylosPartie.tourSuivant() autre client = null");
+			}
+			if (autreJoueurTCPLocal.isConnected()) {
+				System.out.println("PylosPartie.tourSuivant() envoyer à autre client !");
+				NetBuffer message = new NetBuffer();
+				message.writeInt(4);
+				autreJoueurTCPLocal.sendMessage(message);
+			} else {
+				System.out.println("ERREUR : PylosPartie.tourSuivant() autre client non connecté");
+			}
+		}
+		
+		/* débug -  IA vs IA
+		equipeIA = equipeIA.equipeOpposee();
+		tourDe = equipeIA;
+		equipeJoueur = equipeIA.equipeOpposee();*/
+		
 		// Jeu contre l'IA en solo local
 		if (modeDeJeu == ModeDeJeu.SOLO_LOCAL && tourDe != equipeJoueur) {
 			faireJouerIA();
 			//tourSuivant();  faireJouerIA s'occupe de faire passer le tour si besoin (peut aussi attendre actionsGraphiques_loopEffectuerAction() s'il y a des actions graphiques unitaires à afficher)
 		}
-		
+		//System.out.println("PylosPartie.tourSuivant : OKKK tourDe = " + tourDe);
 		return true;
 	}
 	
@@ -214,6 +247,7 @@ public class PylosPartie {
 	// Poser un pion à partir de sa réserve
 	public boolean poseUnPionDeSaReserve(TeamType equipeQuiFaitAction, int hauteur, int xCell, int yCell) {
 		if (tourDe != equipeQuiFaitAction) return false; // si ce n'est pas à cette équipe de jouer
+		if (plateauActuel.isValidPawnPosition(hauteur, xCell, yCell) == false) return false;
 		if (joueurAJoueUnPion) return false; // déjà joué ce tour, impossible de rejouer
 		if (plateauActuel.canPlaceAtPosition(hauteur, xCell, yCell) == false) return false; // position invalide, ou pas de cellule en-dessous
 		// Je vérifie le nombre de jetons restant
@@ -273,6 +307,8 @@ public class PylosPartie {
 	public boolean deplacerUnPion(TeamType equipeQuiFaitAction, int hauteur, int xCell, int yCell, int hauteur_initiale, int xCell_initiale, int yCell_initiale) {
 		if (tourDe != equipeQuiFaitAction) return false; // si ce n'est pas à cette équipe de jouer
 		if (joueurAJoueUnPion) return false; // déjà joué ce tour, impossible de rejouer
+		if (plateauActuel.isValidPawnPosition(hauteur, xCell, yCell) == false) return false;
+		if (plateauActuel.isValidPawnPosition(hauteur_initiale, xCell_initiale, yCell_initiale) == false) return false;
 		if (plateauActuel.canPlaceAtPosition(hauteur, xCell, yCell) == false) return false; // position invalide, ou pas de cellule en-dessous
 		boolean peutBougerPion = plateauActuel.canMovePawn(hauteur, xCell, yCell, hauteur_initiale, xCell_initiale, yCell_initiale);
 		if (peutBougerPion == false) return false;
@@ -333,8 +369,19 @@ public class PylosPartie {
 	
 	
 
-	public void reprendUnPion(TeamType equipeQuiFaitAction, int hauteur, int xCell, int yCell) {
+	public boolean reprendUnPion(TeamType equipeQuiFaitAction, int hauteur, int xCell, int yCell, boolean verifierVariables) {
 		// equipeQuiFaitAction == tourDe, obligatoirement
+		
+		if (verifierVariables) {
+			if (plateauActuel.isValidPawnPosition(hauteur, xCell, yCell) == false) return false;
+			if (tourDe != equipeQuiFaitAction) return false; // si ce n'est pas à cette équipe de jouer
+			if (peutReprendrePionsNb <= 0) return false;
+			boolean peutBougerPion = plateauActuel.canMovePawn(hauteur, xCell, yCell, -1, -1, -1);
+			if (peutBougerPion == false) return false;
+			TeamType equipeSurLaCase = plateauActuel.getCellTeam(hauteur, xCell, yCell);
+			if (equipeSurLaCase != equipeQuiFaitAction) return false;
+		}
+		
 		
 		setCell(hauteur, xCell, yCell, TeamType.AUCUNE);
 		if (equipeQuiFaitAction == TeamType.BLANC) nbJetonsBlanc++;
@@ -345,6 +392,15 @@ public class PylosPartie {
 		listeDeMessagesAEnvoyerAuxJoueurs.add(actionActuelleAsNetBuffer);
 		
 		peutReprendrePionsNb--;
+		
+		if (verifierVariables) {
+			
+			if ((nbJetonsBlanc == 0 || nbJetonsNoir == 0) && peutReprendrePionsNb <= 1 && joueurAJoueUnPion) {
+				peutReprendrePionsNb = 0;
+				tourSuivant();
+			}
+		}
+		return true;
 	}
 	
 	/** Passe le tour automatiquement si c'est possible : TODO
@@ -399,6 +455,7 @@ public class PylosPartie {
 			actionsGraphiques_tempsDerniereAction = System.currentTimeMillis();
 			if (actionsGraphiques_listeDePionsAModifier.size() == 0) {
 				//if (actionsGraphiques_doitPasserleTourALaFin)
+				//System.err.println("PylosPartie.actionsGraphiques_loopEffectuerAction TOUR SUIVANT : tourDe = " + tourDe);
 				tourSuivant(); // implicite
 				return false;
 			}
@@ -411,13 +468,33 @@ public class PylosPartie {
 		if (actionsGraphiques_listeDePionsAModifier.size() == 0) return true;
 		return false;
 	}
+
+	public IA_v40_coup ajouterCoupAEffectuerLentementParIA_coup = null;
+	public long ajouterCoupAEffectuerLentementParIA_lastTimeDone = 0;
+	public long ajouterCoupAEffectuerLentementParIA_maxTimerMs = 50;
+	
+	// Pour afficher lentement les actions de l'IA !
+	public void actionsGraphiques_loopJeuIA() {
+		if (ajouterCoupAEffectuerLentementParIA_coup == null) return;
+		if (ajouterCoupAEffectuerLentementParIA_lastTimeDone + ajouterCoupAEffectuerLentementParIA_maxTimerMs > System.currentTimeMillis()) return; // pas encore !
+		
+		
+		//etapesGraphiquesRestantes = 
+		boolean passerLeTour = IA_v40.appliquerCoupSurPartieActuelle_static(this, equipeIA, ajouterCoupAEffectuerLentementParIA_coup, true);
+		//compteurEtapeGraphique++;
+		
+		ajouterCoupAEffectuerLentementParIA_lastTimeDone = System.currentTimeMillis();
+		
+		ajouterCoupAEffectuerLentementParIA_coup = null;
+	}
+	
+
 	
 	
 	
 	
 	
-	
-	
+	/* OBSOLETE 
 	public void loop_envoyerAuTCPInternet(TCPClient envoiTCP) { // RoomInternetHandler.instance.clientTCP
 		if (modeDeJeu != ModeDeJeu.INTERNET) return;
 		//System.out.println("PylosPartie.loop_envoyerAuTCPInternet");
@@ -439,11 +516,11 @@ public class PylosPartie {
 		listeDeMessagesAEnvoyerAuxJoueurs.clear();
 	}
 	
-	/** 
+	/ ** 
 	 *  @param receptionTCP
 	 *  @param listeMessagesNonTraites messages à traiter par la suite par autre chose qu'un objet PylosPartie
 	 *  @return
-	 */
+	 * /
 	public ArrayList<PylosPartie_actionSimple> loop_recevoirDeTCPInternet(TCPClient receptionTCP, ArrayList<NetBuffer> listeMessagesNonTraites) {
 		if (modeDeJeu != ModeDeJeu.INTERNET) return null;
 		
@@ -502,16 +579,49 @@ public class PylosPartie {
 			}
 			
 		}
+	}*/
+	//public boolean depuisServeurInternet_doitFaireJouerIA = false;
+	
+	
+	
+	/** Récupérer qui joue, qui peut jouer, quel est le numéro du tour actuel. (resynchronisation totale pour les clients)
+	 *  @return
+	 */
+	public NetBuffer ecrireVariablesPrincipales() {
+		NetBuffer result = new NetBuffer();
+		result.writeInt(nbJetonsBlanc);
+		result.writeInt(nbJetonsNoir);
+		result.writeInt(tourDe.asInt);
+		result.writeInt(varianteDuJeu.asInt);
+		result.writeInt(numeroDeTour);
+		result.writeBool(joueurAJoueUnPion);
+		result.writeInt(peutReprendrePionsNb);
+		return result;
 	}
-	public boolean depuisServeurInternet_doitFaireJouerIA = false;
+	
+	public void lireVariablesPrincipales(NetBuffer fromBuffer) {
+		nbJetonsBlanc = fromBuffer.readInt();
+		nbJetonsNoir = fromBuffer.readInt();
+		tourDe = TeamType.fromInt(fromBuffer.readInt());
+		varianteDuJeu = PylosPartieVariante.fromInt(fromBuffer.readInt());
+		numeroDeTour = fromBuffer.readInt();
+		joueurAJoueUnPion = fromBuffer.readBool();
+		peutReprendrePionsNb = fromBuffer.readInt();
+	}
 	
 	
+
+	public TeamType equipeGagnante() {
+		int hauteurMax = plateauActuel.a1Grid.length;
+		if (hauteurMax == 0) return TeamType.AUCUNE;
+		PylosGrid lastGrid = plateauActuel.a1Grid[hauteurMax - 1];
+		return lastGrid.getTeamAtCellPosition(0, 0);
+	}
 	
-	
-	
-	
-	
-	
+	public boolean pyramideRemplie() {
+		if (equipeGagnante() != TeamType.AUCUNE) return true;
+		return false;
+	}
 	
 	
 	

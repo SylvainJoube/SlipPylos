@@ -16,8 +16,22 @@ public class GestionDesParties {
 		GestionDesParties.instance = this;
 	}
 	
-	public void loopParties() {
-		
+	public static void loopGestionParties_static() {
+		//if (instance == null) return;
+		instance.loopGestionParties();
+	}
+	
+	public void loopGestionParties() {
+		int iPartie = 0;
+		while (iPartie < a1Partie.size()) {
+			GestionPartie gestionPartie = a1Partie.get(iPartie);
+			if (gestionPartie.terminee) {
+				a1Partie.remove(iPartie);
+				continue;
+			}
+			gestionPartie.loop();
+			iPartie++;
+		}
 	}
 	
 }

@@ -23,12 +23,11 @@ public class RoomInternetHandler {
 	
 	public static final RoomInternetHandler instance = new RoomInternetHandler();
 	
-	private static final String serverIP = "127.0.0.1";//"192.168.0.23";// // = localhost
+	private static final String serverIP = "localhost";//"pylos.jeanpierre.moe";//"192.168.0.23";// // = localhost
 	private static final int serverPort = 3393;
 	private final String verificationServeurPylosStr = "Je suis un serveur PYLOS version 1";
 	private final String verificationClientPylosStr = "Je suis un client PYLOS version 1";
 	private final String verification_clientValideStr = "client pylos validé, version 1";
-	
 	
 	private int etapeConnexion = 0; // 0 aucun état, 1 connexion au serveur en cours, 2 saisir ses identifiants, 3 recevoir confirmation de ses identifiants, 4 bien connecté au serveur
 	private boolean connexionReussie = false; // <- affichage moche "identifiants incorrects" et retour à la salle de choix du type de partie.
