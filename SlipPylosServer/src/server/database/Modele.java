@@ -26,7 +26,7 @@ public class Modele {
 	private final static String public_host = "https://pylos.jeanpierre.moe"; 
 	private final static String local_host = "http://localhost"; // <- Bien vérifier cete ligne ! 
 	
-	public static String host = local_host; // Modifier cette URL pour la rendre locale
+	public static String host = public_host; // Modifier cette URL pour la rendre locale
 	
 	
 	
