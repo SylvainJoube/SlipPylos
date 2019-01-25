@@ -108,7 +108,8 @@ public class Room1Handler {
 			if (mouseRealeasedOnButton) {
 				switch (iButton) {
 				case 0 :
-					GraphicsHandler.roomGoTo_game(ModeDeJeu.SOLO_LOCAL, equipeQuiJoue, equipeQuiJoue);
+					// c'est toujours le joueur qui commence la partie, mais je peux faire en sorte que ce qoit l'IA
+					GraphicsHandler.roomGoTo_game(ModeDeJeu.SOLO_LOCAL, equipeQuiJoue, equipeQuiJoue); 
 					break;
 				case 1 : 
 					GraphicsHandler.roomGoTo_game(ModeDeJeu.HOT_SEAT, equipeQuiJoue, equipeQuiJoue);

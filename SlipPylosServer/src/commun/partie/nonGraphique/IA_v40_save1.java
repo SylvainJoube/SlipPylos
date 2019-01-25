@@ -1,25 +1,23 @@
 package commun.partie.nonGraphique;
 
+
 import java.util.ArrayList;
 import java.util.Random;
 
-import slip.network.buffers.NetBuffer;
-
 /**
  * IA v40, extension de l'IA v4 avec les fonctionnalités du jeu final
- * 2019-01-23 : IA fonctionnelle, manque élagague + évaluation des pions à reprendre à finir
- * 2019-01-24 : élagage en cours : arrêté car ne marchant pas bien ><"
+ *
  */
 
-// Poser un pion quelque part (ou en déplacer un si IA_v40_poserPion.estUnDeplacement)
-class IA_v40_poserPion {
+// Poser un pion quelque part (ou en déplacer un si IA_v40_save1_poserPion.estUnDeplacement)
+class IA_v40_save1_poserPion {
 	public int xCell, yCell, hauteur;
 	public boolean doitReprendrePionsEnsuite = false; // true si je viens de faire un carré ou une ligne
 	public boolean estUnDeplacement = false;
 	public int xCell_init = -1,
 			   yCell_init = -1, // si c'est un déplacement, uniquement
 			   hauteur_init = -1;
-	public IA_v40_poserPion(int arg_hauteur, int arg_xCell, int arg_yCell, boolean arg_estUnDeplacement) {
+	public IA_v40_save1_poserPion(int arg_hauteur, int arg_xCell, int arg_yCell, boolean arg_estUnDeplacement) {
 		hauteur = arg_hauteur;
 		xCell = arg_xCell;
 		yCell = arg_yCell;
@@ -29,14 +27,14 @@ class IA_v40_poserPion {
 
 /*
 // Déplacer un pion
-class IA_v40_deplacerPion extends IA_v40_poserPion {
+class IA_v40_save1_deplacerPion extends IA_v40_save1_poserPion {
 	
 }*/
 
 //Pion qu'il est possible de déplacer
-class IA_v40_peutDeplacerCePion {
+class IA_v40_save1_peutDeplacerCePion {
 	public int xCell, yCell, hauteur;
-	public IA_v40_peutDeplacerCePion(int arg_hauteur, int arg_xCell, int arg_yCell) {
+	public IA_v40_save1_peutDeplacerCePion(int arg_hauteur, int arg_xCell, int arg_yCell) {
 		hauteur = arg_hauteur;
 		xCell = arg_xCell;
 		yCell = arg_yCell;
@@ -44,14 +42,14 @@ class IA_v40_peutDeplacerCePion {
 }
 
 //Pion qu'il est possible de récupérer
-class IA_v40_peutRecupererCePion {
+class IA_v40_save1_peutRecupererCePion {
 	public int xCell, yCell, hauteur;
-	public IA_v40_peutRecupererCePion(int arg_hauteur, int arg_xCell, int arg_yCell) {
+	public IA_v40_save1_peutRecupererCePion(int arg_hauteur, int arg_xCell, int arg_yCell) {
 		hauteur = arg_hauteur;
 		xCell = arg_xCell;
 		yCell = arg_yCell;
 	}
-	public IA_v40_peutRecupererCePion(IA_v40_peutDeplacerCePion depuis) {
+	public IA_v40_save1_peutRecupererCePion(IA_v40_save1_peutDeplacerCePion depuis) {
 		hauteur = depuis.hauteur;
 		xCell = depuis.xCell;
 		yCell = depuis.yCell;
@@ -59,7 +57,7 @@ class IA_v40_peutRecupererCePion {
 }
 
 
-class IA_v40_cell {
+class IA_v40_save1_cell {
 	int xCell, yCell, hauteur;
 	PylosGrid onGrid;
 	double score;
@@ -67,7 +65,7 @@ class IA_v40_cell {
 	
 	boolean doitReprendrePionsEnsuite = false; // true si je viens de faire un carré ou une ligne
 	
-	public IA_v40_cell(int x, int y, int h, PylosGrid grid) {
+	public IA_v40_save1_cell(int x, int y, int h, PylosGrid grid) {
 		xCell = x;
 		yCell = y;
 		hauteur = h;
@@ -81,30 +79,29 @@ class IA_v40_cell {
 }
 
 // Un coup peut avoir plusieurs actions
-enum IA_v40_coupActionType {
+enum IA_v40_save1_coupActionType {
 	POSER_PION_DEPUIS_RESERVE,
 	DEPLACER_PION,
 	REPRENDRE_PION;
 }
 
 // Une action d'un coup
-class IA_v40_coupAction {
+class IA_v40_save1_coupAction {
 	
 }
 
 // Un coup joué par l'IA (ou une simulation du joueur par l'IA), i.e. toutes les actions faites dans l'ordre par l'IA
-class IA_v40_coup {
+class IA_v40_save1_coup {
 	
-	public TeamType equipeQuiJoueLeCoup = TeamType.INVALIDE; // utile pour la sauvegarde/chargement des parties : afficher les coups d'une partie
-	public IA_v40_poserPion pionAPoserOuDeplacer;
+	public IA_v40_save1_poserPion pionAPoserOuDeplacer;
 	// dans pionAPoserOuDeplacer : public boolean doitReprendrePionsEnsuite = false; // true si je viens de faire un carré ou une ligne
-	public ArrayList<IA_v40_peutRecupererCePion> listePionsARecuperer = null; // créé si je reprends 1 ou + pions (et donc que doitReprendrePionsEnsuite == true)
+	public ArrayList<IA_v40_save1_peutRecupererCePion> listePionsARecuperer = null; // créé si je reprends 1 ou + pions (et donc que doitReprendrePionsEnsuite == true)
 	
 	int nombreDePionsEconomises = 0; // 1 si déplacer un pion, 0 si poser un pion de sa réserve + 1à2 si reprendre des pions. Donc entre 0 et 3. (3 = bien, 0 = normal/mauvais)
-	//ArrayList<IA_v40_coupAction> listeDesActions = new ArrayList<IA_v40_coupAction>();
+	//ArrayList<IA_v40_save1_coupAction> listeDesActions = new ArrayList<IA_v40_save1_coupAction>();
 	
 	public void drawOnScreen() {
-		System.out.println("IA_v40_coup");
+		System.out.println("IA_v40_save1_coup");
 		
 		if (pionAPoserOuDeplacer.estUnDeplacement) {
 			System.out.println(" est un déplacement");
@@ -126,7 +123,7 @@ class IA_v40_coup {
 	
 }
 
-public class IA_v40 {
+public class IA_v40_save1 {
 	
 	// Faire la liste de tous les coups possibles sur le plateauActuel
 	// Pour chaque profondeur, le min-max regarde regarde tous les coups possibles, puis les applique un par un et regarde le score.
@@ -146,25 +143,25 @@ public class IA_v40 {
 	 *  @param equipeAFaireJouer
 	 *  @return
 	 */
-	public static ArrayList<IA_v40_coup> listerTousLesCoupsPossiblesCeTour(PylosGridArray plateauActuel, TeamType equipeAFaireJouer) {//listeDesCoupsPossiblesActuellement = new Arra
+	public static ArrayList<IA_v40_save1_coup> listerTousLesCoupsPossiblesCeTour(PylosGridArray plateauActuel, TeamType equipeAFaireJouer) {//listeDesCoupsPossiblesActuellement = new Arra
 		// 1) Je place un pion quelque part
 		// 2) Je déplace un pion
 		
 		// Cas 1 : j'ai encore des pions, je place un pion quelque part.
 		
 		// Je fais la liste de toutes les cases où je peux poser un pion de ma réserve
-		 ArrayList<IA_v40_poserPion> listeDeTotesLesCasesOuJePeuxPoserOuDeplacerUnPion = listerToutesLesCasesOuJePeuxPoserMonPion(plateauActuel, equipeAFaireJouer, false, -1, -1, -1);
+		 ArrayList<IA_v40_save1_poserPion> listeDeTotesLesCasesOuJePeuxPoserOuDeplacerUnPion = listerToutesLesCasesOuJePeuxPoserMonPion(plateauActuel, equipeAFaireJouer, false, -1, -1, -1);
 		 
 		 // Je fais la liste de tout les pions que je peux bouger (sans l'ajouter à listeDeTotesLesCasesOuJePeuxPoserMonPion)
-		 ArrayList<IA_v40_peutDeplacerCePion> listeDesPionsQueJePeuxDeplacer = listerToutesLesPionsQueJePeuxDeplacer(plateauActuel, equipeAFaireJouer);
+		 ArrayList<IA_v40_save1_peutDeplacerCePion> listeDesPionsQueJePeuxDeplacer = listerToutesLesPionsQueJePeuxDeplacer(plateauActuel, equipeAFaireJouer);
 		 
 		 // Pour chaque pion que je peux bouger, le fais la liste de toutes les cases où je peux le bouger
 		 for (int indexPionQueJePeuxDeplacer = 0; indexPionQueJePeuxDeplacer < listeDesPionsQueJePeuxDeplacer.size(); indexPionQueJePeuxDeplacer++) {
 			 
-			 IA_v40_peutDeplacerCePion peutDeplacerCePion = listeDesPionsQueJePeuxDeplacer.get(indexPionQueJePeuxDeplacer);
+			 IA_v40_save1_peutDeplacerCePion peutDeplacerCePion = listeDesPionsQueJePeuxDeplacer.get(indexPionQueJePeuxDeplacer);
 			 
 			 // Liste de toutes les cases où je peux mettre mon pion
-			 ArrayList<IA_v40_poserPion> toutesLesCasesOuJePeuxDeplacerCePion = listerToutesLesCasesOuJePeuxPoserMonPion(plateauActuel, equipeAFaireJouer, true, peutDeplacerCePion.hauteur, peutDeplacerCePion.xCell, peutDeplacerCePion.yCell);
+			 ArrayList<IA_v40_save1_poserPion> toutesLesCasesOuJePeuxDeplacerCePion = listerToutesLesCasesOuJePeuxPoserMonPion(plateauActuel, equipeAFaireJouer, true, peutDeplacerCePion.hauteur, peutDeplacerCePion.xCell, peutDeplacerCePion.yCell);
 			 
 			 // Ajout de toutes les positions où je peux poser le pion que je veux déplacer
 			 listeDeTotesLesCasesOuJePeuxPoserOuDeplacerUnPion.addAll(toutesLesCasesOuJePeuxDeplacerCePion);
@@ -180,24 +177,24 @@ public class IA_v40 {
 		 // S'il est possible de reprendre des pions, il faut que je regarde toutes les combinaisons possibles :
 		 //// pour tous les pions que je peux reprendre : pour toutes les positions ...
 		 
-		 ArrayList<IA_v40_coup> listeDesCoupsPossibles = new ArrayList<IA_v40_coup>();
+		 ArrayList<IA_v40_save1_coup> listeDesCoupsPossibles = new ArrayList<IA_v40_save1_coup>();
 		 
 		 for (int iPion = 0; iPion < listeDeTotesLesCasesOuJePeuxPoserOuDeplacerUnPion.size(); iPion++) {
 			 
-			 IA_v40_poserPion poserPion = listeDeTotesLesCasesOuJePeuxPoserOuDeplacerUnPion.get(iPion);
+			 IA_v40_save1_poserPion poserPion = listeDeTotesLesCasesOuJePeuxPoserOuDeplacerUnPion.get(iPion);
 			 // --- 1) Ajout du pion au plateau
 			 plateauActuel.setCell(poserPion.hauteur, poserPion.xCell, poserPion.yCell, equipeAFaireJouer);
-			 IA_v40_coup coupActuel = new IA_v40_coup();
+			 IA_v40_save1_coup coupActuel = new IA_v40_save1_coup();
 			 coupActuel.pionAPoserOuDeplacer = poserPion;
 			 //coupActuel.doitReprendrePionsEnsuite = poserPion.doitReprendrePionsEnsuite;
 			 if (poserPion.doitReprendrePionsEnsuite) {
 				 // Short-cut : je ferai plus tard le détail, je me contente de reprendre les 2 premiers pions que je peux récupérer
-				 ArrayList<IA_v40_peutDeplacerCePion> listeDePionsQueJePeuxReprendre = listerToutesLesPionsQueJePeuxDeplacer(plateauActuel, equipeAFaireJouer); // Deplacer == Reprendre dans ce contexte !
-				 IA_v40_peutDeplacerCePion pionActuel = new IA_v40_peutDeplacerCePion(poserPion.hauteur, poserPion.xCell, poserPion.yCell);
-				 //System.out.println("IA_v40.listerTousLesCoupsPossiblesCeTour : reprendre à la hauteur " + poserPion.hauteur);
+				 ArrayList<IA_v40_save1_peutDeplacerCePion> listeDePionsQueJePeuxReprendre = listerToutesLesPionsQueJePeuxDeplacer(plateauActuel, equipeAFaireJouer); // Deplacer == Reprendre dans ce contexte !
+				 IA_v40_save1_peutDeplacerCePion pionActuel = new IA_v40_save1_peutDeplacerCePion(poserPion.hauteur, poserPion.xCell, poserPion.yCell);
+				 //System.out.println("IA_v40_save1.listerTousLesCoupsPossiblesCeTour : reprendre à la hauteur " + poserPion.hauteur);
 				 listeDePionsQueJePeuxReprendre.add(pionActuel); // ajout du pion que je vais poser à la liste des pions que je peux reprendre !
 				 
-				 coupActuel.listePionsARecuperer = new ArrayList<IA_v40_peutRecupererCePion>();
+				 coupActuel.listePionsARecuperer = new ArrayList<IA_v40_save1_peutRecupererCePion>();
 				 
 				 // Reprendre au plus 2 pions
 				 int reprendreNb = 2;
@@ -207,9 +204,9 @@ public class IA_v40 {
 				 // J'ajoute les 2 pions à reprendre
 				 for (int iReprendrePion = 0; iReprendrePion < reprendreNb; iReprendrePion++) {
 					 
-					 // Je convertis mon IA_v40_peutDeplacerCePion en -> IA_v40_peutRecupererCePion (même chose, noms différents)
-					 IA_v40_peutDeplacerCePion pionARecuperer_malType = listeDePionsQueJePeuxReprendre.get(iReprendrePion);
-					 IA_v40_peutRecupererCePion pionARecuperer = new IA_v40_peutRecupererCePion(pionARecuperer_malType);
+					 // Je convertis mon IA_v40_save1_peutDeplacerCePion en -> IA_v40_save1_peutRecupererCePion (même chose, noms différents)
+					 IA_v40_save1_peutDeplacerCePion pionARecuperer_malType = listeDePionsQueJePeuxReprendre.get(iReprendrePion);
+					 IA_v40_save1_peutRecupererCePion pionARecuperer = new IA_v40_save1_peutRecupererCePion(pionARecuperer_malType);
 					 
 					 coupActuel.listePionsARecuperer.add(pionARecuperer);
 				 }
@@ -231,11 +228,11 @@ public class IA_v40 {
 		 }
 		 
 		 /*// AFFICHAGE GRAPHIQUE 
-		 System.out.println("IA_v40.listerTousLesCoupsPossiblesCeTour : size = " + listeDesCoupsPossibles.size());
+		 System.out.println("IA_v40_save1.listerTousLesCoupsPossiblesCeTour : size = " + listeDesCoupsPossibles.size());
 		 for (int iCoup = 0; iCoup < listeDesCoupsPossibles.size(); iCoup++) {
 			 System.out.println("coup possible " + iCoup);
-			 IA_v40_coup coup = listeDesCoupsPossibles.get(iCoup);
-			 IA_v40_poserPion pion = coup.pionAPoserOuDeplacer;
+			 IA_v40_save1_coup coup = listeDesCoupsPossibles.get(iCoup);
+			 IA_v40_save1_poserPion pion = coup.pionAPoserOuDeplacer;
 			 if (pion.estUnDeplacement) System.out.println("  déplacement");
 			 else                       System.out.println("  poser de la réserve");
 
@@ -266,7 +263,7 @@ public class IA_v40 {
 		
 	}
 	
-	// Liste toutes les cases où je peux poser un pion, stocke dans les IA_v40_cell si je dois faire une action ensuite ou non (reprendre des pions)
+	// Liste toutes les cases où je peux poser un pion, stocke dans les IA_v40_save1_cell si je dois faire une action ensuite ou non (reprendre des pions)
 	/** Retourne la liste de toutes les cases où je peux poser mon pion : ilpeut s'agit d'un pion veant de la réserve ou d'un déplacement.
 	 *  @param plateauActuel
 	 *  @param equipeAFaireJouer
@@ -276,10 +273,10 @@ public class IA_v40 {
 	 *  @param yCell_init
 	 *  @return
 	 */
-	private static ArrayList<IA_v40_poserPion> listerToutesLesCasesOuJePeuxPoserMonPion(PylosGridArray plateauActuel, TeamType equipeAFaireJouer, boolean estUnDeplacement, int hauteur_init, int xCell_init, int yCell_init) {
+	private static ArrayList<IA_v40_save1_poserPion> listerToutesLesCasesOuJePeuxPoserMonPion(PylosGridArray plateauActuel, TeamType equipeAFaireJouer, boolean estUnDeplacement, int hauteur_init, int xCell_init, int yCell_init) {
 		
 		// Initialisation de la liste à retourner
-		ArrayList<IA_v40_poserPion> result = new ArrayList<IA_v40_poserPion>();
+		ArrayList<IA_v40_save1_poserPion> result = new ArrayList<IA_v40_save1_poserPion>();
 		
 		// Je parcours toutes les grilles
 		for (int iGrid = 0; iGrid <= plateauActuel.getHauteurMax(); iGrid++) {
@@ -311,7 +308,7 @@ public class IA_v40 {
 				
 				// Ajouter cette position (je peux donc bien poser/déplacer mon pion ici)
 				if (ajouterCettePosition) {
-					IA_v40_poserPion cell = new IA_v40_poserPion(iGrid, xCell, yCell, estUnDeplacement);
+					IA_v40_save1_poserPion cell = new IA_v40_save1_poserPion(iGrid, xCell, yCell, estUnDeplacement);
 					if (estUnDeplacement) {
 						cell.hauteur_init = hauteur_init;
 						cell.xCell_init = xCell_init;
@@ -335,10 +332,10 @@ public class IA_v40 {
 	 *  @param equipeAFaireJouer
 	 *  @return
 	 */
-	private static ArrayList<IA_v40_peutDeplacerCePion> listerToutesLesPionsQueJePeuxDeplacer(PylosGridArray plateauActuel, TeamType equipeAFaireJouer) {
+	private static ArrayList<IA_v40_save1_peutDeplacerCePion> listerToutesLesPionsQueJePeuxDeplacer(PylosGridArray plateauActuel, TeamType equipeAFaireJouer) {
 		
 		// Initialisation de la liste à retourner
-		ArrayList<IA_v40_peutDeplacerCePion> result = new ArrayList<IA_v40_peutDeplacerCePion>();
+		ArrayList<IA_v40_save1_peutDeplacerCePion> result = new ArrayList<IA_v40_save1_peutDeplacerCePion>();
 		
 		// Je parcours toutes les grilles
 		for (int iGrid = 0; iGrid <= plateauActuel.getHauteurMax(); iGrid++) {
@@ -353,7 +350,7 @@ public class IA_v40 {
 				
 				// Si je peux bouger ce pion (i.e. qu'il ne soutient aucun autre pion), je l'ajoute à la liste
 				if (plateauActuel.canMovePawn(iGrid, xCell, yCell, -1, -1, -1)) { 
-					IA_v40_peutDeplacerCePion cell = new IA_v40_peutDeplacerCePion(iGrid, xCell, yCell);
+					IA_v40_save1_peutDeplacerCePion cell = new IA_v40_save1_peutDeplacerCePion(iGrid, xCell, yCell);
 					result.add(cell);
 					
 				}
@@ -370,26 +367,14 @@ public class IA_v40 {
 	 *  @param etapeGraphique pour l'affichage lent, pas à pas
 	 *  @return true s'il n'y a pas d'actions en attente graphique, false sinon (= ne pas passer le tour)
 	 */
-	public boolean appliquerCoupAuPlateauActuel(PylosGridArray plateauActuel, TeamType equipeAFaireJouer, IA_v40_coup coup, boolean ajouterAListeGraphiquePartie) {
-		IA_v40_poserPion pion = coup.pionAPoserOuDeplacer;
+	public boolean appliquerCoupAuPlateauActuel(PylosGridArray plateauActuel, TeamType equipeAFaireJouer, IA_v40_save1_coup coup, boolean ajouterAListeGraphiquePartie) {
+		IA_v40_save1_poserPion pion = coup.pionAPoserOuDeplacer;
 		
 		// Pas un déplacement
 		if (pion.estUnDeplacement == false) {
 			plateauActuel.setCell(pion.hauteur, pion.xCell, pion.yCell, equipeAFaireJouer);
-			if (ajouterAListeGraphiquePartie) {
-				PylosPartie_actionSimple actionActuelle = new PylosPartie_actionSimple(equipeAFaireJouer, 0, pion.hauteur, pion.xCell, pion.yCell);
-				NetBuffer actionActuelleAsNetBuffer = actionActuelle.writeToNetBuffer();
-				partieActuelle.listeDeMessagesAEnvoyerAuxJoueurs.add(actionActuelleAsNetBuffer);
-			}
-			
 		} else { // Un déplacement
 			plateauActuel.deplacerUnPion_forcerDepuisPartie(equipeAFaireJouer, pion.hauteur, pion.xCell, pion.yCell, pion.hauteur_init, pion.xCell_init, pion.yCell_init);
-			
-			if (ajouterAListeGraphiquePartie) {
-				PylosPartie_actionSimple actionActuelle = new PylosPartie_actionSimple(equipeAFaireJouer, 1, pion.hauteur, pion.xCell, pion.yCell, pion.hauteur_init, pion.xCell_init, pion.yCell_init);
-				NetBuffer actionActuelleAsNetBuffer = actionActuelle.writeToNetBuffer();
-				partieActuelle.listeDeMessagesAEnvoyerAuxJoueurs.add(actionActuelleAsNetBuffer);
-			}
 		}
 		
 		// Enlever/créditer les pions
@@ -402,24 +387,17 @@ public class IA_v40 {
 			
 			// Récurérer les pions qui me sont dus
 			for (int iRecupererPion = 0; iRecupererPion < coup.listePionsARecuperer.size(); iRecupererPion++) {
-				IA_v40_peutRecupererCePion recupererPion = coup.listePionsARecuperer.get(iRecupererPion);
+				IA_v40_save1_peutRecupererCePion recupererPion = coup.listePionsARecuperer.get(iRecupererPion);
 				if (ajouterAListeGraphiquePartie == false) // ajouter directement au plateau
 					plateauActuel.setCell(recupererPion.hauteur, recupererPion.xCell, recupererPion.yCell, TeamType.AUCUNE);
 				else // ajouter à la liste graphique de la partie
 					partieActuelle.actionsGraphiques_ajouterCase(recupererPion.hauteur, recupererPion.xCell, recupererPion.yCell, TeamType.AUCUNE);
-				
-				if (ajouterAListeGraphiquePartie) {
-					PylosPartie_actionSimple actionActuelle = new PylosPartie_actionSimple(equipeAFaireJouer, 2, pion.hauteur, pion.xCell, pion.yCell);
-					NetBuffer actionActuelleAsNetBuffer = actionActuelle.writeToNetBuffer();
-					partieActuelle.listeDeMessagesAEnvoyerAuxJoueurs.add(actionActuelleAsNetBuffer);
-				}
-				
 			}
 			if (coup.listePionsARecuperer.size() != 0) {
 				partieActuelle.actionsGraphiques_setTimer();
 				return false;
 			}
-			//IA_v40_peutRecupererCePion recupererPion = coup.listePionsARecuperer.get(etapeGraphique - 1);
+			//IA_v40_save1_peutRecupererCePion recupererPion = coup.listePionsARecuperer.get(etapeGraphique - 1);
 			//plateauActuel.setCell(recupererPion.hauteur, recupererPion.xCell, recupererPion.yCell, TeamType.AUCUNE);
 			//return coup.listePionsARecuperer.size() - etapeGraphique;
 		}
@@ -431,7 +409,7 @@ public class IA_v40 {
 	 *  @param equipeAFaireJouer
 	 *  @param coup
 	 */
-	public boolean appliquerCoupAuPlateauActuel(PylosGridArray plateauActuel, TeamType equipeAFaireJouer, IA_v40_coup coup) {
+	public boolean appliquerCoupAuPlateauActuel(PylosGridArray plateauActuel, TeamType equipeAFaireJouer, IA_v40_save1_coup coup) {
 		return appliquerCoupAuPlateauActuel(plateauActuel, equipeAFaireJouer, coup, false);
 	}
 	
@@ -442,13 +420,13 @@ public class IA_v40 {
 	 *  @param equipeAFaireJouer
 	 *  @param coup
 	 */
-	public void annulerCoupDuPlateauActuel(PylosGridArray plateauActuel, TeamType equipeAFaireJouer, IA_v40_coup coup) {
-		IA_v40_poserPion pion = coup.pionAPoserOuDeplacer;
+	public void annulerCoupDuPlateauActuel(PylosGridArray plateauActuel, TeamType equipeAFaireJouer, IA_v40_save1_coup coup) {
+		IA_v40_save1_poserPion pion = coup.pionAPoserOuDeplacer;
 		
 		// Je remet les pions que j'ai pris, si j'en ai repris
 		if (coup.listePionsARecuperer != null)
 		for (int iRecupererPion = 0; iRecupererPion < coup.listePionsARecuperer.size(); iRecupererPion++) {
-			IA_v40_peutRecupererCePion recupererPion = coup.listePionsARecuperer.get(iRecupererPion);
+			IA_v40_save1_peutRecupererCePion recupererPion = coup.listePionsARecuperer.get(iRecupererPion);
 			plateauActuel.setCell(recupererPion.hauteur, recupererPion.xCell, recupererPion.yCell, equipeAFaireJouer);
 		}
 		
@@ -477,15 +455,15 @@ public class IA_v40 {
 		// Si le joueur n'a plus de pions, je regarde s'il peut bouger un pion
 		
 		// Je fais la liste de tout les pions que je peux bouger
-		 ArrayList<IA_v40_peutDeplacerCePion> listeDesPionsQueJePeuxDeplacer = listerToutesLesPionsQueJePeuxDeplacer(partie.plateauActuel, equipeDuJoueur);
+		 ArrayList<IA_v40_save1_peutDeplacerCePion> listeDesPionsQueJePeuxDeplacer = listerToutesLesPionsQueJePeuxDeplacer(partie.plateauActuel, equipeDuJoueur);
 		 
 		 // Pour chaque pion que je peux bouger, le fais la liste de toutes les cases où je peux le bouger
 		 for (int indexPionQueJePeuxDeplacer = 0; indexPionQueJePeuxDeplacer < listeDesPionsQueJePeuxDeplacer.size(); indexPionQueJePeuxDeplacer++) {
 			 
-			 IA_v40_peutDeplacerCePion peutDeplacerCePion = listeDesPionsQueJePeuxDeplacer.get(indexPionQueJePeuxDeplacer);
+			 IA_v40_save1_peutDeplacerCePion peutDeplacerCePion = listeDesPionsQueJePeuxDeplacer.get(indexPionQueJePeuxDeplacer);
 			 
 			 // Liste de toutes les cases où je peux mettre mon pion
-			 ArrayList<IA_v40_poserPion> toutesLesCasesOuJePeuxDeplacerCePion = listerToutesLesCasesOuJePeuxPoserMonPion(partie.plateauActuel, equipeDuJoueur, true, peutDeplacerCePion.hauteur, peutDeplacerCePion.xCell, peutDeplacerCePion.yCell);
+			 ArrayList<IA_v40_save1_poserPion> toutesLesCasesOuJePeuxDeplacerCePion = listerToutesLesCasesOuJePeuxPoserMonPion(partie.plateauActuel, equipeDuJoueur, true, peutDeplacerCePion.hauteur, peutDeplacerCePion.xCell, peutDeplacerCePion.yCell);
 			 
 			 // S'il y a au moins une position où je peux poser le pion que je veux déplacer, je retourne vrai
 			 if (toutesLesCasesOuJePeuxDeplacerCePion.size() != 0)
@@ -509,15 +487,10 @@ public class IA_v40 {
 	private PylosGridArray plateauActuel;
 	private PylosPartie partieActuelle;
 	private TeamType equipeIA;
-	private IA_v40_coup coupAJouerCeTour;
-	private IA_elagage1 elagageGlobalDeCeTour;
-	public final int NOMBRE_DE_NOEUDS_RETENUS_A_UNE_PRONFONDEUR_DONNEE = 1000;
-	private int profondeurMaxChoisie;
-	
-	public final boolean ACTIVER_ELAGAGE = false;
+	private IA_v40_save1_coup coupAJouerCeTour;
 	//private int etapesGraphiquesRestantes, compteurEtapeGraphique;
 	
-	public void faireJouerIA(PylosPartie arg_partie, TeamType arg_equipeIA, int arg_profondeur, int nombreDeNoeudsAUneProfondeurDonnee) {
+	public void faireJouerIA(PylosPartie arg_partie, TeamType arg_equipeIA, int arg_profondeur) {
 		
 		nbPionsBlanc = arg_partie.nbJetonsBlanc;
 		nbPionsNoir = arg_partie.nbJetonsNoir;
@@ -525,19 +498,14 @@ public class IA_v40 {
 		partieActuelle = arg_partie;
 		equipeIA = arg_equipeIA;
 		coupAJouerCeTour = null;
-		if (ACTIVER_ELAGAGE) {
-			profondeurMaxChoisie = arg_profondeur;
-			elagageGlobalDeCeTour = new IA_elagage1(arg_profondeur + 20, nombreDeNoeudsAUneProfondeurDonnee);
-		}
 		
 		// Si l'IA a encore des pions et pas le joueur, je fais en sorte que l'IA joue le premier coup valide qu'elle peut, en prenant dans sa réserve
 		
 		// prendre le score maximum des coups que je peux jouer
 		// prendre le maximum des coups que l'autre peut jouer
 		// etc.
-		nombreDePossibilitesCalculeesTotal = 0;
 		int scorePrevuIA = faireJouerIA_instance(true, arg_profondeur, true);
-		//System.out.println("IA_v40.faireJouerIA : scorePrevuIA = " + scorePrevuIA);
+		//System.out.println("IA_v40_save1.faireJouerIA : scorePrevuIA = " + scorePrevuIA);
 		//etapesGraphiquesRestantes = 0;
 		//compteurEtapeGraphique = 0;
 		if (coupAJouerCeTour != null) {
@@ -553,10 +521,10 @@ public class IA_v40 {
 			//coupAJouerCeTour.drawOnScreen();
 			
 			
-			System.out.println("IA_v40.faireJouerIA : nombreDePossibilitesCalculeesTotal = " + nombreDePossibilitesCalculeesTotal);
+			//System.out.println("IA_v40_save1.faireJouerIA : coupAJouerCeTour = " + coupAJouerCeTour);
 			if (passerLeTour && partieActuelle.actionsGraphiques_peutPasserLeTour()) arg_partie.tourSuivant(); // le tour sera passé automatiquement sinon, plus tard, via PylosPartie.actionsGraphiques_loopEffectuerAction();
 		} else {
-			//System.err.println("ERREUR IA_v40.faireJouerIA : coupAJouerCeTour == null");
+			//System.err.println("ERREUR IA_v40_save1.faireJouerIA : coupAJouerCeTour == null");
 			if (partieActuelle.actionsGraphiques_peutPasserLeTour())
 				arg_partie.tourSuivant();
 		}
@@ -577,34 +545,12 @@ public class IA_v40 {
 		
 	}*/
 	
-	private int nombreDePossibilitesCalculeesTotal;
-	
-	private int calculerSoreDeIA() {
-		// equipe
-		if (equipeIA == TeamType.NOIR) return nbPionsNoir - nbPionsBlanc; // score pour l'équipe noire
-		if (equipeIA == TeamType.BLANC) return nbPionsBlanc - nbPionsNoir; // score pour l'équipe blanche
-		
-		/*
-		if (equipeQuiJoue == TeamType.NOIR) return nbPionsNoir - nbPionsBlanc; // score pour l'équipe noire
-		if (equipeQuiJoue == TeamType.BLANC) return nbPionsBlanc - nbPionsNoir; // score pour l'équipe blanche
-		*/
-		return -10000; // en cas d'erreur (improbable, ne devrait pas arriver)
-		
-	}
-	
 	/** 
 	 *  @param tourDeIA
 	 *  @param arg_profondeurRestante
 	 *  @return le score de l'IA
 	 */
 	private int faireJouerIA_instance(boolean tourDeIA,  int arg_profondeurRestante, boolean premiereIteration) {
-		
-		if (ACTIVER_ELAGAGE) {
-			int profondeurActuelle = profondeurMaxChoisie - arg_profondeurRestante;
-			boolean calculerCeNoeud = elagageGlobalDeCeTour.testerScoreNoeud(profondeurActuelle, calculerSoreDeIA(), tourDeIA);
-			if (calculerCeNoeud == false) return -10000;
-		}
-		nombreDePossibilitesCalculeesTotal++;
 		
 		TeamType equipeQuiJoue;
 		if (tourDeIA) equipeQuiJoue = equipeIA;
@@ -635,8 +581,8 @@ public class IA_v40 {
 					for (int xCell = 0; xCell < grid.gridWidth; xCell++) for (int yCell = 0; yCell < grid.gridHeight; yCell++) { // toutes les cases en x et en y
 						
 						if (grid.getTeamAtCellPosition_noCheck(xCell, yCell) == TeamType.AUCUNE) {
-							IA_v40_coup coup = new IA_v40_coup();
-							IA_v40_poserPion pionAPoser = new IA_v40_poserPion(iGrid, xCell, yCell, false);
+							IA_v40_save1_coup coup = new IA_v40_save1_coup();
+							IA_v40_save1_poserPion pionAPoser = new IA_v40_save1_poserPion(iGrid, xCell, yCell, false);
 							coup.pionAPoserOuDeplacer = pionAPoser;
 							coupAJouerCeTour = coup;
 							return 0; // l'IA va faire quelque chose car coupAJouerCeTour != null
@@ -650,27 +596,24 @@ public class IA_v40 {
 		
 		if (arg_profondeurRestante <= 0 || nbPionsBlanc <= 0 || nbPionsNoir <= 0) {
 			
-			return calculerSoreDeIA();
-			/*
 			if (equipeIA == TeamType.NOIR) return nbPionsNoir - nbPionsBlanc; // score pour l'équipe noire
 			if (equipeIA == TeamType.BLANC) return nbPionsBlanc - nbPionsNoir; // score pour l'équipe blanche
 			
-			/ *
+			/*
 			if (equipeQuiJoue == TeamType.NOIR) return nbPionsNoir - nbPionsBlanc; // score pour l'équipe noire
 			if (equipeQuiJoue == TeamType.BLANC) return nbPionsBlanc - nbPionsNoir; // score pour l'équipe blanche
-			* /
-			return -10000; // en cas d'erreur (improbable, ne devrait pas arriver)
 			*/
+			return -10000; // en cas d'erreur (improbable, ne devrait pas arriver)
 		}
 		
-		ArrayList<IA_v40_coup> listeDeTousLesCoupsPossibles = listerTousLesCoupsPossiblesCeTour(plateauActuel, equipeQuiJoue);
+		ArrayList<IA_v40_save1_coup> listeDeTousLesCoupsPossibles = listerTousLesCoupsPossiblesCeTour(plateauActuel, equipeQuiJoue);
 		
 		int coupRetenuIndex = -1;
 		int coupRetenuScore = -10000;
 		// Si c'est le tour de l'IA : je maximise son score, je prend la meilleure branche
 		// Si c'est le tour de l'adversaire : je minimise le score de l'IA
 		for (int iCoup = 0; iCoup < listeDeTousLesCoupsPossibles.size(); iCoup++) {
-			IA_v40_coup coup = listeDeTousLesCoupsPossibles.get(iCoup);
+			IA_v40_save1_coup coup = listeDeTousLesCoupsPossibles.get(iCoup);
 			appliquerCoupAuPlateauActuel(plateauActuel, equipeQuiJoue, coup);
 			
 			int score = faireJouerIA_instance((tourDeIA == false), arg_profondeurRestante - 1, false);
@@ -697,7 +640,7 @@ public class IA_v40 {
 		// Je prends le coup choisi (meilleur coup pour l'IA ou pire coup pour l'IA suivant que c'est à son tour de jouer ou à l'adversaire)
 		if (coupRetenuIndex != -1) {
 			// Je prends le meilleur coup (selon mes critères)
-			IA_v40_coup coup = listeDeTousLesCoupsPossibles.get(coupRetenuIndex);
+			IA_v40_save1_coup coup = listeDeTousLesCoupsPossibles.get(coupRetenuIndex);
 			// j'ajoute ce coup au plateau
 			appliquerCoupAuPlateauActuel(plateauActuel, equipeQuiJoue, coup);
 			// Je fais jouer en récursif
@@ -714,24 +657,16 @@ public class IA_v40 {
 	
 	
 	
-	public static void playOnce(PylosPartie partie, TeamType monEquipe, int profondeurDeRecherche, int nombreDeNoeudsAUneProfondeurDonnee) {
-		IA_v40 ia = new IA_v40();
+	public static void playOnce(PylosPartie partie, TeamType monEquipe, int profondeurDeRecherche) {
+		IA_v40_save1 ia = new IA_v40_save1();
 		
-		ia.faireJouerIA(partie, monEquipe, profondeurDeRecherche, nombreDeNoeudsAUneProfondeurDonnee);
+		ia.faireJouerIA(partie, monEquipe, profondeurDeRecherche);
 		ia = null;
 	}
 	
 	// Implémenté par compatilité pour IA_v1 et v2
-	//public static void joueUnCoup(TeamType equipeAJouer, PylosPartie partie, int profondeurRecherche) {
-	//	playOnce(partie, equipeAJouer, profondeurRecherche);
-	//}
-	
-	
-	// Fonctions d'élagage : liste des scores des noeuds : je ne retiens que les 40 ou 100 meilleurs noeuds, peu importe la profondeur : score minimal que doit avoir un noeud pour ne pas être abandonné
-	// -> augmentation pseudo-linéaire et non exponentielle
-	
-	
-	
-	
+	public static void joueUnCoup(TeamType equipeAJouer, PylosPartie partie, int profondeurRecherche) {
+		playOnce(partie, equipeAJouer, profondeurRecherche);
+	}
 }
 

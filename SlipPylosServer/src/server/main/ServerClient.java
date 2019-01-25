@@ -1,5 +1,7 @@
 package server.main;
 
+import java.util.ArrayList;
+
 import slip.network.buffers.NetBuffer;
 import slip.network.tcp.TCPClient;
 
@@ -9,8 +11,10 @@ public class ServerClient {
 	public int ID;
 	public static int NextClientID = 1;
 	public boolean deconnecterLeClientDesQuePossible = false;
-	private int etapeConnexion_serveur = 0; // presque même chose que RoomInternetHandler.etapeConnexion
+	public int etapeConnexion_serveur = 0; // presque même chose que RoomInternetHandler.etapeConnexion
 	public final int maxMessagesParClientEtParIteration = 5; // pour empêcher qu'un client flood le serveur
+	
+	GestionPartie gestionPartieActuelle;
 	
 	public String monMotDePasse, monNomDeCompte;
 	public int nombreVictoires, nombreDefaites, scoreTotal;
@@ -36,6 +40,7 @@ public class ServerClient {
 	}
 	
 	public void disconnect() {
+		EcouteClients.instance.supprimerDeToutesLesListesDeRecherche(this);
 		if (client == null) return;
 		client.stop();
 		client = null;
@@ -43,14 +48,20 @@ public class ServerClient {
 	
 	public void loop() {
 		// Ecouter les nouveaux messages
-		for (int iMessage = 0; iMessage < maxMessagesParClientEtParIteration; iMessage++) { // Pour écouter plusieurs messages à la fois, si besoin
-			boolean nouveauMessageRecu = ecouteNouveauMessage();
-			if (! nouveauMessageRecu) break; // plus de messages, inutile de continuer
+		if (etapeConnexion_serveur <= 3) {
+			for (int iMessage = 0; iMessage < maxMessagesParClientEtParIteration; iMessage++) { // Pour écouter plusieurs messages à la fois, si besoin
+				boolean nouveauMessageRecu = ecouteNouveauMessage();
+				if (! nouveauMessageRecu) break; // plus de messages, inutile de continuer
+			}
+			
+			// 
+			if (etapeConnexion_serveur == 2) {
+				recevoirReponseDemandeConnexionDB();
+			}
 		}
 		
-		// 
-		if (etapeConnexion_serveur == 2) {
-			recevoirReponseDemandeConnexionDB();
+		if (etapeConnexion_serveur == 4) {
+			loop_etape4();
 		}
 		
 	}
@@ -110,6 +121,9 @@ public class ServerClient {
 	
 	private void recevoirReponseDemandeConnexionDB() {
 		
+		// if (pas encore recu de réponse) return;
+		// + timer
+		
 		// Si réponse OK, requête reçue et prête, je l'envoie au client
 		// là, je fais comme si je venais de la recevoir (que la requête est "prête à être lue")
 		
@@ -126,13 +140,62 @@ public class ServerClient {
 		
 		System.out.println("SERVERR : ServerClient.recevoirReponseDemandeConnexionDB go en jeu !");
 		
+		// SI réponse pas ok : deconnecterLeClientDesQuePossible = true; et je laisse etapeConnexion_serveur = 2;
+		
 	}
 	
-
+	/** Rechercher une partie. Le client est connecté et validé par le serveur, quand il est en étape 3.
+	 *  @param message
+	 */
 	private void nouveauMessage_etape3(NetBuffer message) {
-		System.out.println("SERVERR : ServerClient.nouveauMessage_etape1 :");
+		System.out.println("SERVERR : ServerClient.nouveauMessage_etape3 :");
+		int messageType = message.readInt();
+
+		// Chercher une partie classée
+		if (messageType == 10) {
+			EcouteClients.instance.supprimerDeToutesLesListesDeRecherche(this);
+			EcouteClients.instance.ajouterAListe_joueurClasse(this);
+		}
+
+		// Chercher une partie non classée
+		if (messageType == 11) {
+			EcouteClients.instance.supprimerDeToutesLesListesDeRecherche(this);
+			EcouteClients.instance.ajouterAListe_joueurNonClasse(this);
+			
+		}
+
+		// Chercher une partie classée contre une IA (la créer presque immédiatement, du coup)
+		if (messageType == 12) {
+			EcouteClients.instance.supprimerDeToutesLesListesDeRecherche(this); // Je retire le joueur des autres listes
+			EcouteClients.instance.ajouterAListe_contreIA(this);
+		}
 		
+		
+	}
+	
+	/** Le joueur est en jeu !
+	 *  @param message
+	 */
+	private void loop_etape4() {
+		//System.out.println("SERVERR : ServerClient.loop_etape4 :");
+		
+		
+		ArrayList<NetBuffer> listeMessageATraiter = new ArrayList<NetBuffer>();
+		gestionPartieActuelle.partieActuelle.depuisServeurInternet_doitFaireJouerIA = true;
+		gestionPartieActuelle.partieActuelle.loop_recevoirDeTCPInternet(client, listeMessageATraiter); // loop_recevoirDuServeurInternet
+		
+		for (int iMessageATraiter = 0; iMessageATraiter < listeMessageATraiter.size(); iMessageATraiter++) {
+			NetBuffer message = listeMessageATraiter.get(iMessageATraiter);
+			// traiter le message du serveur : déconnexion autre joueur, fin de partie...
+			
+		}
+			
 	}
 	
 	
 }
+
+
+
+
+

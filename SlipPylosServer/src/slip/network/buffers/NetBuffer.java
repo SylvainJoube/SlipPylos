@@ -3,6 +3,7 @@ package slip.network.buffers;
 //import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 /**
  * Classe NetBuffer permettant de constituer des messages
@@ -382,6 +383,19 @@ public class NetBuffer { // fonctionnement synchrone, non thread-safe
 		}
 		
 		
+	}
+	
+	/** Lent et pas optimisé, mais fonctionnel. Fait par manque de temps.
+	 * @param otherBuffer
+	 * @return
+	 */
+	public boolean isEqualTo(NetBuffer otherBuffer) {
+		if (otherBuffer == null) return false;
+		// méthode bourrine, pas optimisée du tout : PAR MANQUE DE TEMPS !
+		byte[] thisBufferAsByteArray = this.convertToByteArray();
+		byte[] otherBufferAsByteArray = otherBuffer.convertToByteArray();
+		boolean areEqual = Arrays.equals(thisBufferAsByteArray, otherBufferAsByteArray);
+		return areEqual;
 	}
 	
 	

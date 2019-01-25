@@ -1,19 +1,25 @@
 package client.roomInternet;
 
-import java.awt.Graphics2D;
+import java.awt.Button;
+import java.awt.Color;
+import java.awt.Font;
 import java.awt.Image;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
+import javax.swing.ImageIcon;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
 import javax.swing.JTextField;
+import javax.swing.border.EmptyBorder;
 
 import client.outils.graphiques.GraphicsHandler;
-import client.outils.graphiques.PImage;
 import client.partie.graphique.RessourceManager;
-import commun.partie.nonGraphique.ModeDeJeu;
-import commun.partie.nonGraphique.TeamType;
 import slip.network.buffers.NetBuffer;
 import slip.network.tcp.TCPClient;
 
@@ -21,7 +27,7 @@ public class RoomInternetHandler {
 	
 	
 	
-	public static final RoomInternetHandler instance = new RoomInternetHandler();
+	private static final RoomInternetHandler instance = new RoomInternetHandler();
 	
 	private static final String serverIP = "127.0.0.1";//"192.168.0.23";// // = localhost
 	private static final int serverPort = 3393;
@@ -32,7 +38,7 @@ public class RoomInternetHandler {
 	
 	private int etapeConnexion = 0; // 0 aucun état, 1 connexion au serveur en cours, 2 saisir ses identifiants, 3 recevoir confirmation de ses identifiants, 4 bien connecté au serveur
 	private boolean connexionReussie = false; // <- affichage moche "identifiants incorrects" et retour à la salle de choix du type de partie.
-	public TCPClient clientTCP = null;
+	private TCPClient clientTCP = null;
 	private long dateExpirationTimer; // pour arrêter d'attendre une réponse du serveur si celle-ci met trop de temps à arriver
 	private final long tempsAttenteMaxConnexionInitiale = 4 * 1000;
 	private final long tempsAttenteMaxPremierMessage = 2 * 1000;
@@ -87,25 +93,117 @@ public class RoomInternetHandler {
 	 *  
 	 */
 	public void demanderIdentifiants() {
+		JFrame jframe=new JFrame();
+	
+		jframe.setForeground(Color.BLACK);
+		jframe.setTitle("Pylos");
+		jframe.setAutoRequestFocus(false);
+		jframe.setBounds(100, 100, 757, 495);
+		
 		JPanel panel = new JPanel();
-		JLabel affichageNomDeCompte = new JLabel("Nom de compte ->");
-		JLabel affichageMotDePasse = new JLabel("Mot de passe ->");
-		JTextField nomDeCompte = new JTextField(20);
-		JPasswordField motDePasse = new JPasswordField(20);
-		//motDePasse.setBounds(10, 10, 170, 2000); // 70 200
+		panel.setBackground(Color.WHITE);
+		panel.setBorder(new EmptyBorder(5, 5, 5, 5));
+		jframe.setContentPane(panel);
+		panel.setLayout(null);
+		
+		JLabel lblConnexionEnJeu = new JLabel("Connexion en jeu");
+		lblConnexionEnJeu.setFont(new Font("Yu Gothic", Font.BOLD, 15));
+		lblConnexionEnJeu.setBounds(524, 39, 140, 49);
+		panel.add(lblConnexionEnJeu);
+		
+		JLabel affichageNomDeCompte = new JLabel("User");
+		affichageNomDeCompte.setFont(new Font("Tahoma", Font.BOLD, 12));
+		affichageNomDeCompte.setBounds(427, 159, 71, 26);
 		panel.add(affichageNomDeCompte);
+		
+		JTextField nomDeCompte = new JTextField();
+		nomDeCompte.setBounds(508, 160, 166, 26);
 		panel.add(nomDeCompte);
+		nomDeCompte.setColumns(10);
+		
+		JLabel affichageMotDePasse = new JLabel("Password");
+		affichageMotDePasse.setFont(new Font("Tahoma", Font.BOLD, 12));
+		affichageMotDePasse.setBounds(427, 212, 71, 26);
 		panel.add(affichageMotDePasse);
+		
+		
+		
+		JPasswordField motDePasse = new JPasswordField(20);
+		motDePasse.setBounds(508, 210, 166, 26);
 		panel.add(motDePasse);
+		//motDePasse.setBounds(10, 10, 170, 2000); // 70 200
+		
+		
+		//this panel pour la partie left, avec image pylos
+		JPanel panel_t = new JPanel();
+		panel_t.setBackground(Color.BLACK);
+		panel_t.setBounds(0, 0, 405, 456);
+		panel.add(panel_t);
+		panel_t.setLayout(null);
+		
+		JLabel lblNewLabel_1 = new JLabel("");
+		lblNewLabel_1.setBounds(51, 52, 324, 359);
+		lblNewLabel_1.setIcon(new ImageIcon(RoomInternetHandler.class.getResource("/images/pylos.jpg")));
+		panel_t.add(lblNewLabel_1);
+		
+		Button btnConnect = new Button("Connect");
+		btnConnect.setBackground(new Color(241,57,83));
+		btnConnect.setBounds(524, 315, 128, 33);
+		panel.add(btnConnect);
+		
+		
+		final JFrame tmp=jframe;
+		
+		//Back pour revenir Home
+		JLabel lblBack = new JLabel("l");
+		//click Back pour revenir Home
+		lblBack.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent arg0) {
+				try {
+					tmp.setVisible(false);
+					tmp.dispose();
+					GraphicsHandler gHandler = new GraphicsHandler();
+
+					gHandler.roomGoTo_menuChoixTypePartie();
+					gHandler.loop();
+					
+					
+				
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		});
+		lblBack.setIcon(new ImageIcon(RoomInternetHandler.class.getResource("/images/backk.png")));
+		lblBack.setBounds(414, 11, 46, 19);
+		panel.add(lblBack);
+		
+		jframe.setVisible(true);
+		 
+		
+		//ici le code valider le button connect, pour pouvoir recuperer, envoie username et password
+		
+		btnConnect.addActionListener(new ActionListener() {
+			
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+		});
+		/*
 		String[] options = new String[]{"Valider ", "Retour - Annuler"};
 		int option = JOptionPane.showOptionDialog(null, panel, "Entrez vos identifiants internet PYLOS",
 		                         JOptionPane.NO_OPTION, JOptionPane.PLAIN_MESSAGE,
-		                         null, options, options[0]);
+		                         null, options, options[0]);*/
 		/*if(option == 0) // pressing OK button
 		{
 		    char[] password = motDePasse.getPassword();
 		    System.out.println("Your password is: " + new String(password));
 		}*/
+		/*
 		if(option == 0) // pressing OK button
 		{
 			
@@ -129,7 +227,7 @@ public class RoomInternetHandler {
 			GraphicsHandler.roomGoTo_menuChoixTypePartie();
 		}
 		
-		
+		*/
 		
 		//String test1 = JOptionPane.showInputDialog("Please input mark for test 1: ");
 	}
@@ -295,20 +393,6 @@ public class RoomInternetHandler {
 
 		if (loop_connectionLost()) return;
 		
-		NetBuffer receivedMessage = clientTCP.getNewMessage();
-		if (receivedMessage == null) return;
-		
-		int messageType = receivedMessage.readInt();
-		
-		// Rejoindre une partie :
-		if (messageType == 90) {
-			TeamType cEstLeTourDe = TeamType.fromInt(receivedMessage.readInt());
-			TeamType equipeJoueurActuel = TeamType.fromInt(receivedMessage.readInt());
-			// Noms des joueurs...
-			System.out.println("loop_etape6 !");
-			GraphicsHandler.roomGoTo_game(ModeDeJeu.INTERNET, cEstLeTourDe, equipeJoueurActuel);
-		}
-		
 		
 		
 		
@@ -319,7 +403,7 @@ public class RoomInternetHandler {
 	/** 
 	 * @return true si le client n'est pas/plus connecté
 	 */
-	public boolean loop_connectionLost() {
+	private boolean loop_connectionLost() {
 		if (clientTCP == null) {
 			etapeConnexion = 0;
 			return true;
@@ -362,48 +446,7 @@ public class RoomInternetHandler {
 		JOptionPane.showMessageDialog(null, message, "information - PylosOnline! (peut-être PylosOffline d'ailleurs...)", typeMessage);
 	}
 	
-	private RoomInternetHandler_typePartieRecherchee partieRecherchee = RoomInternetHandler_typePartieRecherchee.AUCUNE;
-	
 	private void loopGraphique() {
-		
-		if (etapeConnexion < 6) return;
-		
-		Graphics2D currentGraphics = GraphicsHandler.getMainGraphics();
-		
-		int xButton = 100;
-		int yButton = 200;
-		int buttonTotalHeight = 60;
-
-		boolean chercherPartieClassee = PImage.checkImageAsButton(true, currentGraphics, spr_InternetTrouverPartieClassee, xButton, yButton);
-		// Afficher un texte si je suis incrit dans la liste de recherche de ce type de partie
-		yButton += buttonTotalHeight;
-		
-		boolean chercherPartieNonClassee = PImage.checkImageAsButton(true, currentGraphics, spr_InternetTrouverPartieNonClassee, xButton, yButton);
-		// Afficher un texte si je suis incrit dans la liste de recherche de ce type de partie
-		yButton += buttonTotalHeight;
-		
-		boolean chercherPartieClasseeIA = PImage.checkImageAsButton(true, currentGraphics, spr_InternetTrouverPartieClasseeIA, xButton, yButton);
-		// Afficher un texte si je suis incrit dans la liste de recherche de ce type de partie
-		yButton += buttonTotalHeight;
-
-		if (chercherPartieClassee) { // demande au serveur
-			NetBuffer message = new NetBuffer();
-			message.writeInt(10);
-			clientTCP.sendMessage(message); // partieRecherchee sera mis à jour via loop_etape6()
-		}
-
-		if (chercherPartieNonClassee) { // demande au serveur
-			NetBuffer message = new NetBuffer();
-			message.writeInt(11);
-			clientTCP.sendMessage(message); // partieRecherchee sera mis à jour via loop_etape6()
-		}
-
-		if (chercherPartieClasseeIA) { // demande au serveur
-			NetBuffer message = new NetBuffer();
-			message.writeInt(12);
-			clientTCP.sendMessage(message); // partieRecherchee sera mis à jour via loop_etape6()
-		}
-		
 		
 		// Dessin des boutons, choix 
 	}
@@ -418,17 +461,11 @@ public class RoomInternetHandler {
 		spr_InternetTrouverPartieClasseeIA = RessourceManager.LoadImage("images/InternetTrouverPartieClasseeIA.png");
 		
 	}
-	
+	public static void main(String[] args) {
+		instance.demanderIdentifiants();
+	}
 	
 }
-
-enum RoomInternetHandler_typePartieRecherchee {
-	AUCUNE,
-	CLASSEE_VS_JOUEUR,
-	NON_CLASSEE_VS_JOUEUR,
-	CLASSEE_VS_IA; // si aucun joueur
-}
-
 
 
 

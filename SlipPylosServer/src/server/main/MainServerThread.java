@@ -27,10 +27,12 @@ public class MainServerThread implements Runnable {
 		System.out.println("MainServerThread.run : Serveur lancé, port " + serverPort);
 		
 		EcouteClients ecouterLesClients = new EcouteClients(serveurTCP);
+		GestionDesParties gestionDesParties = new GestionDesParties();
 		
 		while (hasToStop.get() == false) {
 			
 			ecouterLesClients.loop();
+			gestionDesParties.loopParties();
 			
 			try {
 				Thread.sleep(4);

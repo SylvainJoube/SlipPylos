@@ -7,6 +7,7 @@ import java.awt.Image;
 import java.awt.Point;
 import java.awt.image.BufferedImage;
 import java.awt.image.RescaleOp;
+import java.util.ArrayList;
 
 import client.listeners.CustomPoint;
 //import client.listeners.CustomPoint;
@@ -18,6 +19,7 @@ import client.listeners.Listeners;
 import client.outils.graphiques.BoxPosition;
 import client.outils.graphiques.GraphicsHandler;
 import client.outils.graphiques.PImage;
+import client.roomInternet.RoomInternetHandler;
 import client.roomReseauLocalAttente.RoomReseauLocalAttenteHandler;
 import commun.partie.nonGraphique.*;
 import slip.network.buffers.NetBuffer;
@@ -385,6 +387,76 @@ public class GameHandler {
 		}
 	}
 	
+	private void loop_envoyerAuServeurInternet() {
+		if (partieActuelle.modeDeJeu != ModeDeJeu.INTERNET) return;
+		if (RoomInternetHandler.instance.loop_connectionLost()) return; // perte de la connexion au serveur
+		
+		int nbMessagesEnvoyer = partieActuelle.listeDeMessagesAEnvoyerAuxJoueurs.size();
+		for (int iMessage = 0; iMessage < nbMessagesEnvoyer; iMessage++) {
+			NetBuffer coupAsBuffer = partieActuelle.listeDeMessagesAEnvoyerAuxJoueurs.get(iMessage);
+			byte[] coupAsByteArray = coupAsBuffer.convertToByteArray(); // j'aurais aussi pu tout regrouper... !
+			NetBuffer messageAEnvoyer = new NetBuffer();
+			messageAEnvoyer.writeInt(100);
+			messageAEnvoyer.writeByteArray(coupAsByteArray);
+			RoomInternetHandler.instance.clientTCP.sendMessage(messageAEnvoyer);
+			System.out.println("GameHandler.loop_envoyerAuServeurInternet : envoyer une action simple !!");
+		}
+		partieActuelle.listeDeMessagesAEnvoyerAuxJoueurs.clear();
+	}
+	
+	private void loop_recevoirDuServeurInternet() {
+		if (partieActuelle.modeDeJeu != ModeDeJeu.INTERNET) return;
+		if (RoomInternetHandler.instance.loop_connectionLost()) return; // perte de la connexion au serveur
+		
+		for (int miniI = 0; miniI < 100; miniI++) {
+			NetBuffer nouveauMessage = RoomInternetHandler.instance.clientTCP.getNewMessage();
+			if (nouveauMessage == null) break;
+			int messageType = nouveauMessage.readInt();
+			
+			// Recevoir un nouveau coup joué
+			if (messageType == 100) {
+				byte[] actionAsByteArray = nouveauMessage.readByteArray();
+				NetBuffer actionAsNetBuffer = new NetBuffer(actionAsByteArray);
+				// Maintenant, faire jouer le coup :
+				PylosPartie_actionSimple actionSimple = PylosPartie_actionSimple.readFromNetBuffer(actionAsNetBuffer);
+				
+				loop_recevoirDuServeurInternet_traiterAction(actionSimple);
+				System.out.println("GameHandler.loop_recevoirDuServeurInternet : recevoir une action simple !!");
+				
+				
+			}
+			
+			
+			
+		}
+	}
+	
+	private void loop_recevoirDuServeurInternet_traiterAction(PylosPartie_actionSimple actionSimple) {
+		
+		//System.out.println("GameHandler.loopReseauLocal, message reçu : messageID = " + messageID);
+		
+		if (actionSimple.typeAction == 0) { // poser un pion à partir de sa réserve
+			TeamType equipeQuiJoueLeCoup = actionSimple.equipeQuiJoueLeCoup;
+			partieActuelle.poseUnPionDeSaReserve(equipeQuiJoueLeCoup, actionSimple.hauteur, actionSimple.xCell, actionSimple.yCell);
+		}
+		
+		if (actionSimple.typeAction == 1) { // déplacer un pion
+			TeamType equipeQuiJoueLeCoup = actionSimple.equipeQuiJoueLeCoup;
+			partieActuelle.deplacerUnPion(equipeQuiJoueLeCoup, actionSimple.hauteur, actionSimple.xCell, actionSimple.yCell, actionSimple.hauteur_init, actionSimple.xCell_init, actionSimple.yCell_init);
+		}
+		
+		if (actionSimple.typeAction == 2) { // reprendre un pion
+			TeamType equipeQuiJoueLeCoup = actionSimple.equipeQuiJoueLeCoup;
+			partieActuelle.reprendUnPion(equipeQuiJoueLeCoup, actionSimple.hauteur, actionSimple.xCell, actionSimple.yCell);
+		}
+		
+		if (actionSimple.typeAction == 3) { // passer son tour
+			partieActuelle.tourSuivant();
+		}
+		
+		
+		
+	}
 	
 	// Sera appelé par GraphicsHandler
 	public static void staticGameLoop() {
@@ -413,6 +485,22 @@ public class GameHandler {
 		drawTourSuivant();
 		// Boucle si le jeu est en réseau local
 		loopReseauLocal();
+		
+		if (RoomInternetHandler.instance.loop_connectionLost() == false) { // perte de la connexion au serveur
+			// Si jeu sur intenet, envoyer les coups
+			partieActuelle.loop_envoyerAuTCPInternet(RoomInternetHandler.instance.clientTCP);
+			// Si jeu sur intenet, recevoir les coups
+			ArrayList<NetBuffer> listeMessageATraiter = new ArrayList<NetBuffer>();
+			partieActuelle.loop_recevoirDeTCPInternet(RoomInternetHandler.instance.clientTCP, listeMessageATraiter); // loop_recevoirDuServeurInternet
+			
+			for (int iMessageATraiter = 0; iMessageATraiter < listeMessageATraiter.size(); iMessageATraiter++) {
+				NetBuffer message = listeMessageATraiter.get(iMessageATraiter);
+				// traiter le message du serveur : déconnexion autre joueur, fin de partie...
+				
+			}
+			
+		}
+		
 		
 		
 		
