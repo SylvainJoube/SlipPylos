@@ -17,7 +17,7 @@ public class PylosPartie {
 	public TeamType tourDe = TeamType.NOIR;
 	//public IA_v1 ia = new IA_v1(TeamType.NOIR, this);
 	public TeamType equipeJoueur = TeamType.BLANC;
-	public TeamType equipeIA = TeamType.NOIR; // si il y a une IA (solo local)
+	public TeamType equipeIA = TeamType.NOIR; // si il y a une IA (solo local SEULEMENT)
 	public PylosPartieVariante varianteDuJeu = PylosPartieVariante.JOUEURS_AVERTIS;
 	private TCPClient autreJoueurTCPLocal = null; // seulement utile en TCP local
 	
@@ -50,10 +50,13 @@ public class PylosPartie {
 		return nbJetons;
 	}
 	
-	/** 
+	/**
+	 * 
 	 * @param arg_modeDeJeu
 	 * @param cEstLeTourDe
 	 * @param equipeJoueurActuel ma couleur, la couleur du joueur du client actuel
+	 * @param arg_autreJoueurTCPLocal
+	 * @param arg_modeServeurInternet
 	 */
 	public PylosPartie(ModeDeJeu arg_modeDeJeu, TeamType cEstLeTourDe, TeamType equipeJoueurActuel, TCPClient arg_autreJoueurTCPLocal, boolean arg_modeServeurInternet) { // constructeur
 		plateauActuel = new PylosGridArray(nbCasesCote, this);
@@ -233,7 +236,7 @@ public class PylosPartie {
 		
 	}
 	
-	private void faireJouerIA() {
+	public void faireJouerIA() {
 		//IA_v0_stupid.joueUnCoup(TeamType.NOIR, this, 4000);
 		
 		IA_v40.playOnce(this, equipeIA, 4, 8000);
@@ -585,18 +588,22 @@ public class PylosPartie {
 	
 	
 	/** Récupérer qui joue, qui peut jouer, quel est le numéro du tour actuel. (resynchronisation totale pour les clients)
-	 *  @return
+	 *  @return buffer avec les variables principales de la partie
 	 */
 	public NetBuffer ecrireVariablesPrincipales() {
 		NetBuffer result = new NetBuffer();
-		result.writeInt(nbJetonsBlanc);
-		result.writeInt(nbJetonsNoir);
-		result.writeInt(tourDe.asInt);
-		result.writeInt(varianteDuJeu.asInt);
-		result.writeInt(numeroDeTour);
-		result.writeBool(joueurAJoueUnPion);
-		result.writeInt(peutReprendrePionsNb);
+		ecrireVariablesPrincipales(result);
 		return result;
+	}
+	
+	public void ecrireVariablesPrincipales(NetBuffer inBuffer) {
+		inBuffer.writeInt(nbJetonsBlanc);
+		inBuffer.writeInt(nbJetonsNoir);
+		inBuffer.writeInt(tourDe.asInt);
+		inBuffer.writeInt(varianteDuJeu.asInt);
+		inBuffer.writeInt(numeroDeTour);
+		inBuffer.writeBool(joueurAJoueUnPion);
+		inBuffer.writeInt(peutReprendrePionsNb);
 	}
 	
 	public void lireVariablesPrincipales(NetBuffer fromBuffer) {
@@ -610,7 +617,7 @@ public class PylosPartie {
 	}
 	
 	
-
+	
 	public TeamType equipeGagnante() {
 		int hauteurMax = plateauActuel.a1Grid.length;
 		if (hauteurMax == 0) return TeamType.AUCUNE;
@@ -623,7 +630,22 @@ public class PylosPartie {
 		return false;
 	}
 	
+	public NetBuffer ecrireTouteLaPartieDansBuffer() {
+		NetBuffer result = ecrireVariablesPrincipales();
+		plateauActuel.writeInBuffer(result);
+		return result;
+	}
 	
+	public void ecrireTouteLaPartieDansBuffer(NetBuffer inBuffer) {
+		ecrireVariablesPrincipales(inBuffer);
+		plateauActuel.writeInBuffer(inBuffer);
+	}
+	
+	
+	public void lireTouteLaPartieDepuisBuffer(NetBuffer readFromBuff) {
+		lireVariablesPrincipales(readFromBuff);
+		plateauActuel.readFromBuffer(readFromBuff);
+	}
 	
 	
 	

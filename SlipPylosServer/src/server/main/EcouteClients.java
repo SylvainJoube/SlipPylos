@@ -39,6 +39,7 @@ public class EcouteClients {
 		loopListesRecherche(); // mettre en relation dans une partie les clients qui recherent une partie
 		
 		
+		
 	}
 	
 	private void accepterNouveauxClients() {
@@ -81,9 +82,9 @@ public class EcouteClients {
 		}
 	}
 
-	private ArrayList<ServerClient> a1ClientRecherche_partieVsJoueurClassee = new ArrayList<ServerClient>();
-	private ArrayList<ServerClient> a1ClientRecherche_partieVsJoueurNonClassee = new ArrayList<ServerClient>();
-	private ArrayList<ServerClient> a1ClientRecherche_partieVsIA = new ArrayList<ServerClient>();
+	public static ArrayList<ServerClient> a1ClientRecherche_partieVsJoueurClassee = new ArrayList<ServerClient>();
+	public static ArrayList<ServerClient> a1ClientRecherche_partieVsJoueurNonClassee = new ArrayList<ServerClient>();
+	public static ArrayList<ServerClient> a1ClientRecherche_partieVsIA = new ArrayList<ServerClient>();
 	
 	public void supprimerDeToutesLesListesDeRecherche(ServerClient servClient) {
 		a1ClientRecherche_partieVsJoueurClassee.remove(servClient);
@@ -112,23 +113,57 @@ public class EcouteClients {
 		// 1) Je traîte les demandes de jeu contre une IA
 		// /!\ passage du client de etape3 à etape4 => supprimerDeToutesLesListesDeRecherche()
 		
-		int iRecherche = 0;
-		while (iRecherche < a1ClientRecherche_partieVsIA.size()) {
+		
+		while (a1ClientRecherche_partieVsIA.size() > 0) {
 			// Lancer une partie avec une IA !
 			
-			ServerClient servClient = a1ClientRecherche_partieVsIA.get(iRecherche);
+			ServerClient servClient = a1ClientRecherche_partieVsIA.get(0);
+			a1ClientRecherche_partieVsIA.remove(0);
 			// S'il n'y a pas trop de parties contre une IA lancées, j'en lance une (condition à implémenter plus tard)
 			GestionPartie nouvellePartie = new GestionPartie(TypePartie.CLASSEE_VS_IA);
 			nouvellePartie.debuterPartieVsIA(servClient);
-			a1ClientRecherche_partieVsIA.remove(iRecherche);
 			servClient.etapeConnexion_serveur = 4; // dans une partie
 			servClient.gestionPartieActuelle = nouvellePartie;
-			continue;
 			
 			
 			//iRecherche++;
 		}
+
 		
+		while (a1ClientRecherche_partieVsJoueurClassee.size() >= 2) {
+			// Lancer une partie avec une IA !
+
+			ServerClient joueur1 = a1ClientRecherche_partieVsJoueurClassee.get(0);
+			ServerClient joueur2 = a1ClientRecherche_partieVsJoueurClassee.get(1);
+			a1ClientRecherche_partieVsJoueurClassee.remove(0);
+			a1ClientRecherche_partieVsJoueurClassee.remove(0);
+			
+			GestionPartie nouvellePartie = new GestionPartie(TypePartie.CLASSEE_VS_JOUEUR);
+			nouvellePartie.debuterPartieVsJoueur_classe(joueur1, joueur2);
+			joueur1.etapeConnexion_serveur = 4; // dans une partie
+			joueur2.etapeConnexion_serveur = 4; // dans une partie
+			joueur1.gestionPartieActuelle = nouvellePartie;
+			joueur2.gestionPartieActuelle = nouvellePartie;
+			
+		}
+
+		
+		while (a1ClientRecherche_partieVsJoueurNonClassee.size() >= 2) {
+			// Lancer une partie avec une IA !
+
+			ServerClient joueur1 = a1ClientRecherche_partieVsJoueurNonClassee.get(0);
+			ServerClient joueur2 = a1ClientRecherche_partieVsJoueurNonClassee.get(1);
+			a1ClientRecherche_partieVsJoueurNonClassee.remove(0);
+			a1ClientRecherche_partieVsJoueurNonClassee.remove(0);
+			
+			GestionPartie nouvellePartie = new GestionPartie(TypePartie.NON_CLASSEE_VS_JOUEUR);
+			nouvellePartie.debuterPartieVsJoueur_nonClasse(joueur1, joueur2);
+			joueur1.etapeConnexion_serveur = 4; // dans une partie
+			joueur2.etapeConnexion_serveur = 4; // dans une partie
+			joueur1.gestionPartieActuelle = nouvellePartie;
+			joueur2.gestionPartieActuelle = nouvellePartie;
+			
+		}
 		
 		
 	}

@@ -530,7 +530,7 @@ public class IA_v40 {
 			*/
 			
 			
-			if (coup.listePionsARecuperer.size() != 0) {
+			if (coup.listePionsARecuperer.size() != 0 && ajouterAListeGraphiquePartie && (estServeurInternet == false)) {
 				partieActuelle.actionsGraphiques_setTimer();
 				return false;
 			}
@@ -633,7 +633,10 @@ public class IA_v40 {
 	//private int etapesGraphiquesRestantes, compteurEtapeGraphique;
 	
 
-	public static ArrayList<IA_v40_coup> serveurInternetUniquement_listeCoupIA = new ArrayList<IA_v40_coup>();
+	//public static ArrayList<IA_v40_coup> serveurInternetUniquement_listeCoupIA = new ArrayList<IA_v40_coup>();
+	
+	public static ArrayList<PylosPartie_actionSimple> serveurInternetUniquement_listeActionsSimplesIA = new ArrayList<PylosPartie_actionSimple>();
+	
 	public static boolean estServeurInternet = false;
 	
 	public void faireJouerIA(PylosPartie arg_partie, TeamType arg_equipeIA, int arg_profondeur, int nombreDeNoeudsAUneProfondeurDonnee) {
@@ -667,8 +670,45 @@ public class IA_v40 {
 			
 			//etapesGraphiquesRestantes = 
 			boolean passerLeTour = appliquerCoupAuPlateauActuel(arg_partie.plateauActuel, arg_equipeIA, coupAJouerCeTour, true);
-			serveurInternetUniquement_listeCoupIA.add(coupAJouerCeTour); // clear par le serveur !!
+			//serveurInternetUniquement_listeCoupIA.add(coupAJouerCeTour); // clear par le serveur !!
 			
+			if (estServeurInternet) {
+				// Décomposition du coup en actions simples, et ajout à la liste serveurInternetUniquement_listeActionsSimplesIA
+				//coupAJouerCeTour.equipeQuiJoueLeCoup
+				IA_v40_poserPion pionAPoserOuDeplacer = coupAJouerCeTour.pionAPoserOuDeplacer;
+				PylosPartie_actionSimple action1 = new PylosPartie_actionSimple();
+				if (pionAPoserOuDeplacer.estUnDeplacement) {
+					action1.typeAction = 1;
+					action1.equipeQuiJoueLeCoup = arg_equipeIA;
+					action1.hauteur = pionAPoserOuDeplacer.hauteur;
+					action1.xCell = pionAPoserOuDeplacer.xCell;
+					action1.yCell = pionAPoserOuDeplacer.yCell;
+					action1.hauteur_init = pionAPoserOuDeplacer.hauteur_init;
+					action1.xCell_init = pionAPoserOuDeplacer.xCell_init;
+					action1.yCell_init = pionAPoserOuDeplacer.yCell_init;
+				} else {
+					action1.typeAction = 0;
+					action1.equipeQuiJoueLeCoup = arg_equipeIA;
+					action1.hauteur = pionAPoserOuDeplacer.hauteur;
+					action1.xCell = pionAPoserOuDeplacer.xCell;
+					action1.yCell = pionAPoserOuDeplacer.yCell;
+				}
+				// Ajout de la prmeière action
+				serveurInternetUniquement_listeActionsSimplesIA.add(action1);
+				
+				// Reprendre des pions
+				//int nbReprendre = coupAJouerCeTour.listePionsARecuperer.size();
+				if (coupAJouerCeTour.listePionsARecuperer != null)
+				for (IA_v40_peutRecupererCePion recupPion : coupAJouerCeTour.listePionsARecuperer) { //int iReprendre = 0; iReprendre < nbReprendre; iReprendre++) {
+					PylosPartie_actionSimple actionRecuperer = new PylosPartie_actionSimple();
+					actionRecuperer.typeAction = 2;
+					actionRecuperer.equipeQuiJoueLeCoup = arg_equipeIA;
+					actionRecuperer.hauteur = recupPion.hauteur;
+					actionRecuperer.xCell = recupPion.xCell;
+					actionRecuperer.yCell = recupPion.yCell;
+					serveurInternetUniquement_listeActionsSimplesIA.add(actionRecuperer);
+				}
+			}
 			//compteurEtapeGraphique++;
 			
 			arg_partie.nbJetonsBlanc = nbPionsBlanc;
@@ -689,14 +729,28 @@ public class IA_v40 {
 				graphicPeutPasserTour = true;
 			}
 			
-			if (passerLeTour && graphicPeutPasserTour) arg_partie.tourSuivant(); // le tour sera passé automatiquement sinon, plus tard, via PylosPartie.actionsGraphiques_loopEffectuerAction();
+			if (passerLeTour && graphicPeutPasserTour) {
+				arg_partie.tourSuivant(); // le tour sera passé automatiquement sinon, plus tard, via PylosPartie.actionsGraphiques_loopEffectuerAction();
+				
+				if (estServeurInternet) {
+					PylosPartie_actionSimple actionPasserTour = new PylosPartie_actionSimple(3);
+					actionPasserTour.equipeQuiJoueLeCoup = arg_equipeIA;
+					serveurInternetUniquement_listeActionsSimplesIA.add(actionPasserTour);
+				}
+			}
 			
 			
 			
 		} else {
 			//System.err.println("ERREUR IA_v40.faireJouerIA : coupAJouerCeTour == null");
-			if (partieActuelle.actionsGraphiques_peutPasserLeTour())
+			if (partieActuelle.actionsGraphiques_peutPasserLeTour() || estServeurInternet) {
 				arg_partie.tourSuivant();
+				if (estServeurInternet) {
+					PylosPartie_actionSimple actionPasserTour = new PylosPartie_actionSimple(3);
+					actionPasserTour.equipeQuiJoueLeCoup = arg_equipeIA;
+					serveurInternetUniquement_listeActionsSimplesIA.add(actionPasserTour);
+				}
+			}
 		}
 		
 		

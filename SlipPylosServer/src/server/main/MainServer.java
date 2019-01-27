@@ -14,7 +14,7 @@ public class MainServer {
 	
 	public static final int serverPort = 3393; // <- port à modifier si besoin
 	
-	public static final boolean toujoursVerifierUtilisateursAvecDB = true; // true = on a accès à la DB, false = on autorise tout le monde
+	public static final boolean toujoursVerifierUtilisateursAvecDB = false; // true = on a accès à la DB, false = on autorise tout le monde
 	
 	
 	public static void main(String[] args) {

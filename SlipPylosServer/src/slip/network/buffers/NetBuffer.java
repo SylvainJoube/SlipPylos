@@ -51,6 +51,11 @@ public class NetBuffer { // fonctionnement synchrone, non thread-safe
 	}
 	public void writeBool(boolean boolData) { writeBoolean(boolData); }
 	
+	public void writeByte(byte byteData) {
+		NetBufferData newData = new NetBufferData(byteData);
+		dataList.add(newData);
+	}
+	
 
 	public void setPosition(int setOffset) {
 		currentReadPos = setOffset;
@@ -142,6 +147,18 @@ public class NetBuffer { // fonctionnement synchrone, non thread-safe
 	}
 	public boolean readBool() { return readBoolean(); }
 	
+
+	public byte readByte() {
+		if (currentReadPos >= dataList.size()) return 0;
+		NetBufferData data = dataList.get(currentReadPos);
+		currentReadPos++;
+		if (data == null) return 0;
+		if (data.byteData == null) return 0; // ne devrait pas arriver si le message est lu dans le bon ordre
+		return data.byteData;
+	}
+	
+	
+	
 	// Vérification des types de données
 	public boolean currentData_isInteger() {
 		if (currentReadPos >= dataList.size()) return false;
@@ -150,13 +167,14 @@ public class NetBuffer { // fonctionnement synchrone, non thread-safe
 			return true;
 		return false;
 	}
-	public boolean currentData_isDouble() { NetBufferData data = dataList.get(currentReadPos); if (data.dataType.equals(NetBufferDataType.DOUBLE))     return true; return false; }
-	public boolean currentData_isString()     throws IndexOutOfBoundsException { NetBufferData data = dataList.get(currentReadPos); if (data.dataType.equals(NetBufferDataType.STRING))     return true; return false; }
-	public boolean currentData_isByteArray()  throws IndexOutOfBoundsException { NetBufferData data = dataList.get(currentReadPos); if (data.dataType.equals(NetBufferDataType.BYTE_ARRAY)) return true; return false; }
-	public boolean currentData_isBoolean()    throws IndexOutOfBoundsException { NetBufferData data = dataList.get(currentReadPos); if (data.dataType.equals(NetBufferDataType.BOOLEAN))    return true; return false; }
-	public boolean currentData_isInt()        { return currentData_isInteger(); }
-	public boolean currentData_isStr()        throws IndexOutOfBoundsException { return currentData_isStr(); }
-	public boolean currentData_isBool()       throws IndexOutOfBoundsException { return currentData_isBool(); }
+	public boolean currentData_isDouble()    { NetBufferData data = dataList.get(currentReadPos); if (data.dataType.equals(NetBufferDataType.DOUBLE))     return true; return false; }
+	public boolean currentData_isString()    { NetBufferData data = dataList.get(currentReadPos); if (data.dataType.equals(NetBufferDataType.STRING))     return true; return false; }
+	public boolean currentData_isByteArray() { NetBufferData data = dataList.get(currentReadPos); if (data.dataType.equals(NetBufferDataType.BYTE_ARRAY)) return true; return false; }
+	public boolean currentData_isBoolean()   { NetBufferData data = dataList.get(currentReadPos); if (data.dataType.equals(NetBufferDataType.BOOLEAN))    return true; return false; }
+	public boolean currentData_isByte()     { NetBufferData data = dataList.get(currentReadPos); if (data.dataType.equals(NetBufferDataType.BYTE))        return true; return false; }
+	public boolean currentData_isInt()       { return currentData_isInteger(); }
+	public boolean currentData_isStr()       { return currentData_isStr(); }
+	public boolean currentData_isBool()      { return currentData_isBool(); }
 	public boolean currentData_isLong() {
 		NetBufferData data = dataList.get(currentReadPos);
 		if (data.dataType.equals(NetBufferDataType.LONG))
@@ -376,6 +394,14 @@ public class NetBuffer { // fonctionnement synchrone, non thread-safe
 				long longValue = NetBufferData.byteArrayToLong(longByteArray);
 				NetBufferData longData = new NetBufferData(longValue);
 				dataList.add(longData);
+				break;
+
+			case BYTE :
+				if (checkCriticalReadSizeError(currentPosInRawDataBuffer, 1)) return; // <- erreur critique, taille du buffer insuffisante
+				byte byteValue = receivedRawData[currentPosInRawDataBuffer];
+				currentPosInRawDataBuffer++;
+				NetBufferData byteData = new NetBufferData(byteValue);
+				dataList.add(byteData);
 				break;
 				
 			default : break;

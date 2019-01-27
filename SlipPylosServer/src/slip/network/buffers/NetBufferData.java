@@ -16,8 +16,14 @@ public class NetBufferData {
 	public Long longData = null;
 	public String stringData = null;
 	public Boolean booleanData = null;
+	public Byte byteData = null;
 	public byte[] byteArrayData = null;
 
+
+	public NetBufferData(byte arg_byteData) {
+		dataType = NetBufferDataType.BYTE;
+		byteData = new Byte(arg_byteData);
+	}
 	public NetBufferData(int arg_intData) {
 		dataType = NetBufferDataType.INTEGER;
 		integerData = new Integer(arg_intData);
@@ -109,6 +115,14 @@ public class NetBufferData {
 			longByteBuff.put((byte) dataType.toInteger()); // type de la donnée
 			longByteBuff.putLong(writeLong);
 			return longByteBuff.array();
+
+		case BYTE :
+			byte writeByte = 0;
+			if (byteData != null) writeByte = byteData.byteValue();
+			byte[] resultByteByteArray = new byte[2];
+			resultByteByteArray[0] = (byte) dataType.toInteger(); // type de la donnée
+			resultByteByteArray[1] = writeByte;
+			return resultByteByteArray;
 			
 		default : return null;
 		}

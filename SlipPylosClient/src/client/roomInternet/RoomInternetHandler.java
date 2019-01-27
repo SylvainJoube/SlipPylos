@@ -1,5 +1,7 @@
 package client.roomInternet;
 
+import java.awt.Color;
+import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.Image;
 
@@ -23,7 +25,7 @@ public class RoomInternetHandler {
 	
 	public static final RoomInternetHandler instance = new RoomInternetHandler();
 	
-	private static final String serverIP = "localhost";//"pylos.jeanpierre.moe";//"192.168.0.23";// // = localhost
+	private static final String serverIP = "192.168.0.23";//"pylos.jeanpierre.moe";//"192.168.0.23";// // = localhost
 	private static final int serverPort = 3393;
 	private final String verificationServeurPylosStr = "Je suis un serveur PYLOS version 1";
 	private final String verificationClientPylosStr = "Je suis un client PYLOS version 1";
@@ -288,6 +290,10 @@ public class RoomInternetHandler {
 	}
 	
 
+	public static int recherchePartie_nbJoueurClassee = 0;
+	public static int recherchePartie_nbJoueurNonClassee = 0;
+	public static int recherchePartie_nbIA = 0;
+	
 	/** Bien authentifié au serveur !
 	 */
 	private void loop_etape6() {
@@ -302,12 +308,22 @@ public class RoomInternetHandler {
 		// Rejoindre une partie :
 		if (messageType == 90) {
 			TeamType cEstLeTourDe = TeamType.fromInt(receivedMessage.readInt());
-			TeamType equipeJoueurActuel = TeamType.fromInt(receivedMessage.readInt());
+			TeamType equipeJoueurActuel = TeamType.fromInt(receivedMessage.readInt()); // = mon équipe
 			// Noms des joueurs...
 			System.out.println("loop_etape6 !");
 			GraphicsHandler.roomGoTo_game(ModeDeJeu.INTERNET, cEstLeTourDe, equipeJoueurActuel);
 		}
 		
+
+		if (messageType == 21) { // actualisation de nombre de personnes en attente vs IA
+			recherchePartie_nbIA = receivedMessage.readInt();
+		}
+		if (messageType == 22) { // actualisation de nombre de personnes en attente vs IA
+			recherchePartie_nbJoueurClassee = receivedMessage.readInt();
+		}
+		if (messageType == 23) { // actualisation de nombre de personnes en attente vs IA
+			recherchePartie_nbJoueurNonClassee = receivedMessage.readInt();
+		}
 		
 		
 		
@@ -372,16 +388,30 @@ public class RoomInternetHandler {
 		int xButton = 100;
 		int yButton = 200;
 		int buttonTotalHeight = 60;
-
+		
+		
+		currentGraphics.setFont(new Font("TimesRoman", Font.BOLD, 20)); 
+		currentGraphics.setColor(Color.WHITE);
+		String str;
+		int imgWidth;
 		boolean chercherPartieClassee = PImage.checkImageAsButton(true, currentGraphics, spr_InternetTrouverPartieClassee, xButton, yButton);
+		imgWidth = PImage.getImageWidth(spr_InternetTrouverPartieClassee);
+		str = recherchePartie_nbJoueurClassee + " personne(s) en attente";
+		currentGraphics.drawString(str, xButton + imgWidth + 10, yButton + 20);
 		// Afficher un texte si je suis incrit dans la liste de recherche de ce type de partie
 		yButton += buttonTotalHeight;
 		
 		boolean chercherPartieNonClassee = PImage.checkImageAsButton(true, currentGraphics, spr_InternetTrouverPartieNonClassee, xButton, yButton);
+		imgWidth = PImage.getImageWidth(spr_InternetTrouverPartieNonClassee);
+		str = recherchePartie_nbJoueurNonClassee + " personne(s) en attente";
+		currentGraphics.drawString(str, xButton + imgWidth + 10, yButton + 20);
 		// Afficher un texte si je suis incrit dans la liste de recherche de ce type de partie
 		yButton += buttonTotalHeight;
 		
 		boolean chercherPartieClasseeIA = PImage.checkImageAsButton(true, currentGraphics, spr_InternetTrouverPartieClasseeIA, xButton, yButton);
+		imgWidth = PImage.getImageWidth(spr_InternetTrouverPartieClasseeIA);
+		str = recherchePartie_nbIA + " personne(s) en attente";
+		currentGraphics.drawString(str, xButton + imgWidth + 10, yButton + 20);
 		// Afficher un texte si je suis incrit dans la liste de recherche de ce type de partie
 		yButton += buttonTotalHeight;
 

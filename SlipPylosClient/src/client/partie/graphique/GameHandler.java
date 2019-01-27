@@ -862,10 +862,19 @@ public class GameHandler {
 			int hauteur = message.readInt();
 			int xCell = message.readInt();
 			int yCell = message.readInt();
-			NetBuffer variablesImportantesPartie = new NetBuffer(message.readByteArray());
+			boolean recevoirInfosPartie = message.readBool();
+			//System.out.println("GameHandler.internet_traiterMessage : " + equipeQuiAJoue + " pose un pion de sa réserve");
 			
 			partieActuelle.setCell(hauteur, xCell, yCell, equipeQuiAJoue);
-			partieActuelle.lireVariablesPrincipales(variablesImportantesPartie);
+			
+
+			if (recevoirInfosPartie) {
+				NetBuffer variablesImportantesPartie = new NetBuffer(message.readByteArray());
+				partieActuelle.lireVariablesPrincipales(variablesImportantesPartie);
+			} else {
+				if (equipeQuiAJoue == TeamType.NOIR) partieActuelle.nbJetonsNoir--;
+				if (equipeQuiAJoue == TeamType.BLANC) partieActuelle.nbJetonsBlanc--;
+			}
 			
 		}
 
@@ -875,32 +884,73 @@ public class GameHandler {
 			int hauteur = message.readInt();
 			int xCell = message.readInt();
 			int yCell = message.readInt();
-
 			int hauteur_init = message.readInt();
 			int xCell_init = message.readInt();
 			int yCell_init = message.readInt();
-			NetBuffer variablesImportantesPartie = new NetBuffer(message.readByteArray());
+			boolean recevoirInfosPartie = message.readBool();
+			//System.out.println("GameHandler.internet_traiterMessage : " + equipeQuiAJoue + " déplace un pion");
 
 			partieActuelle.setCell(hauteur, xCell, yCell, equipeQuiAJoue);
 			partieActuelle.setCell(hauteur_init, xCell_init, yCell_init, TeamType.AUCUNE);
-			partieActuelle.lireVariablesPrincipales(variablesImportantesPartie);
+			
+			if (recevoirInfosPartie) {
+				NetBuffer variablesImportantesPartie = new NetBuffer(message.readByteArray());
+				partieActuelle.lireVariablesPrincipales(variablesImportantesPartie);
+			} else {
+				// pas d'ajout/suppression de pions
+			}
 			
 		}
 		
-		
-		
-
 		// Reprendre un pion (réussite, pas de message en cas d'erreur !)
 		if (messageType == 112) {
 			TeamType equipeQuiAJoue = TeamType.fromInt(message.readInt());
 			int hauteur = message.readInt();
 			int xCell = message.readInt();
 			int yCell = message.readInt();
-			NetBuffer variablesImportantesPartie = new NetBuffer(message.readByteArray());
+			boolean recevoirInfosPartie = message.readBool();
 			
 			partieActuelle.setCell(hauteur, xCell, yCell, TeamType.AUCUNE);
-			partieActuelle.lireVariablesPrincipales(variablesImportantesPartie);
 			
+			if (recevoirInfosPartie) {
+				NetBuffer variablesImportantesPartie = new NetBuffer(message.readByteArray());
+				partieActuelle.lireVariablesPrincipales(variablesImportantesPartie);
+			} {
+				if (equipeQuiAJoue == TeamType.NOIR) partieActuelle.nbJetonsNoir++;
+				if (equipeQuiAJoue == TeamType.BLANC) partieActuelle.nbJetonsBlanc++;
+			}
+			
+		}
+		
+		if (messageType == 113) { // réception du tour actuel
+			partieActuelle.tourDe = TeamType.fromInt(message.readInt());
+			
+		}
+		
+		if (messageType == 114) { // actualisation des variables de la partie
+			NetBuffer variablesImportantesPartie = new NetBuffer(message.readByteArray());
+			partieActuelle.lireVariablesPrincipales(variablesImportantesPartie);
+		}
+		
+		if (messageType == 115) { // actualisation de l'ensemble de la partie
+			partieActuelle.lireTouteLaPartieDepuisBuffer(message);
+		}
+		
+		
+		/*if (messageType == 1190) { // réception d'une liste de coups joués
+			
+			
+			partieActuelle.lireTouteLaPartieDepuisBuffer(message);
+			//ss
+			GameHandler.jeuActuel.refreshWithMousePosition();
+			System.out.println("GameHandler.internet_traiterMessage : resynchronisation de la partie...");
+		}*/
+		
+		if (messageType == 120) { // resynchronisation totale de la partie
+			partieActuelle.lireTouteLaPartieDepuisBuffer(message);
+			//ss
+			GameHandler.jeuActuel.refreshWithMousePosition();
+			System.out.println("GameHandler.internet_traiterMessage : resynchronisation de la partie...");
 		}
 		
 		

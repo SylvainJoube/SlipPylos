@@ -24,6 +24,42 @@ public class ServerClient {
 	
 	public String monMotDePasse, monNomDeCompte;
 	public int nombreVictoires, nombreDefaites, scoreTotal;
+
+	private int souvenir_nbPersonnesDansListe_joueurClasses = -1;
+	private int souvenir_nbPersonnesDansListe_joueurNonClasses = -1;
+	private int souvenir_nbPersonnesDansListe_joueurIA = -1;
+
+	
+	
+	public void evoyerChangementNombre_listeVsJoueurClasse(int nouveauNombre) {
+		if (etapeConnexion_serveur != 3) return; // 0-2 pas encore authentifié, 3 là, 4 en partie
+		if (souvenir_nbPersonnesDansListe_joueurClasses == nouveauNombre) return;
+		souvenir_nbPersonnesDansListe_joueurClasses = nouveauNombre;
+		NetBuffer message = new NetBuffer();
+		message.writeInt(22);
+		message.writeInt(nouveauNombre);
+		client.sendMessage(message);
+	}
+	
+	public void evoyerChangementNombre_listeVsJoueurNonClasse(int nouveauNombre) {
+		if (etapeConnexion_serveur != 3) return; // 0-2 pas encore authentifié, 3 là, 4 en partie
+		if (souvenir_nbPersonnesDansListe_joueurNonClasses == nouveauNombre) return;
+		souvenir_nbPersonnesDansListe_joueurNonClasses = nouveauNombre;
+		NetBuffer message = new NetBuffer();
+		message.writeInt(23);
+		message.writeInt(nouveauNombre);
+		client.sendMessage(message);
+	}
+	
+	public void evoyerChangementNombre_listeVsIA(int nouveauNombre) {
+		if (etapeConnexion_serveur != 3) return; // 0-2 pas encore authentifié, 3 là, 4 en partie
+		if (souvenir_nbPersonnesDansListe_joueurIA == nouveauNombre) return;
+		souvenir_nbPersonnesDansListe_joueurIA = nouveauNombre;
+		NetBuffer message = new NetBuffer();
+		message.writeInt(21);
+		message.writeInt(nouveauNombre);
+		client.sendMessage(message);
+	}
 	
 	public ServerClient(TCPClient arg_client) {
 		client = arg_client;
@@ -64,6 +100,10 @@ public class ServerClient {
 			if (etapeConnexion_serveur == 2) {
 				recevoirReponseDemandeConnexionDB();
 			}
+			
+			evoyerChangementNombre_listeVsJoueurClasse(EcouteClients.a1ClientRecherche_partieVsJoueurClassee.size());
+			evoyerChangementNombre_listeVsJoueurNonClasse(EcouteClients.a1ClientRecherche_partieVsJoueurNonClassee.size());
+			evoyerChangementNombre_listeVsIA(EcouteClients.a1ClientRecherche_partieVsIA.size());
 		}
 		
 		if (etapeConnexion_serveur == 4) {
@@ -236,6 +276,10 @@ public class ServerClient {
 		
 		System.out.println("ServerClient.loop_etape4 : nouveau message, messageType = " + messageType);
 		
+		// Messages de partie xxx, messages avant la partie xx
+		// Si je reçois un message en xx, je déconnecte le joueur de sa partie
+		
+		
 		// Poser un pion de sa réserve
 		// Si la demande est valide, je l'envoie aux clients de la partie
 		if (messageType == 110) {
@@ -268,6 +312,8 @@ public class ServerClient {
 				envoi.writeInt(hauteur);
 				envoi.writeInt(xCell);
 				envoi.writeInt(yCell);
+				envoi.writeBool(true); // envoi des infos de la partie à la suite
+				
 				NetBuffer variablesImportantesPartie = partieActuelle.ecrireVariablesPrincipales(); // prend donc en compte le changement de tour !
 				envoi.writeByteArray(variablesImportantesPartie.convertToByteArray());
 				gestionPartieActuelle.envoyerMessagesAuxJoueurs(envoi);
@@ -314,6 +360,7 @@ public class ServerClient {
 				envoi.writeInt(hauteur_init);
 				envoi.writeInt(xCell_init);
 				envoi.writeInt(yCell_init);
+				envoi.writeBool(true); // envoi des infos de la partie à la suite
 				
 				NetBuffer variablesImportantesPartie = partieActuelle.ecrireVariablesPrincipales(); // prend donc en compte le changement de tour !
 				envoi.writeByteArray(variablesImportantesPartie.convertToByteArray());
@@ -356,6 +403,8 @@ public class ServerClient {
 				envoi.writeInt(hauteur);
 				envoi.writeInt(xCell);
 				envoi.writeInt(yCell);
+				envoi.writeBool(true); // envoi des infos de la partie à la suite
+				
 				NetBuffer variablesImportantesPartie = partieActuelle.ecrireVariablesPrincipales(); // prend donc en compte le changement de tour !
 				envoi.writeByteArray(variablesImportantesPartie.convertToByteArray());
 				gestionPartieActuelle.envoyerMessagesAuxJoueurs(envoi);

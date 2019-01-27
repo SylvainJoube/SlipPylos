@@ -19,6 +19,15 @@ public enum TeamType {
 		asInt = arg_asInt;
 	}
 	
+	public final String asString() {
+		if (this == NOIR) return "noir";
+		if (this == BLANC) return "blanc";
+		if (this == AUCUNE) return "aucune";
+		if (this == INVALIDE) return "invalide";
+		return "invalide";
+	}
+	
+	
 	public static TeamType fromInt(int arg_fromInt) {
 		switch (arg_fromInt) {
 		case -1 : return TeamType.INVALIDE;

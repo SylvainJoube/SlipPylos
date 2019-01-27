@@ -23,7 +23,7 @@ public class PylosPartie_actionSimple {
 			   yCell_init = -1, // si c'est un déplacement (typeAction = 1), uniquement
 			   hauteur_init = -1;
 
-
+	
 	public PylosPartie_actionSimple() {
 		///System.out.println("PylosPartie_actionSimple constructeur 0");
 	}
@@ -71,6 +71,22 @@ public class PylosPartie_actionSimple {
 			}
 		}
 		return result;
+	}
+	
+	public void writeToNetBuffer(NetBuffer writeToBuff) {
+		writeToBuff.writeInt(typeAction);
+		if (typeAction != 3) { // 3 = passer le tour
+			writeToBuff.writeInt(equipeQuiJoueLeCoup.asInt);
+			//System.err.println("PylosPartie_actionSimple.writeToNetBuffer equipeAsInt = " + equipeQuiJoueLeCoup.asInt);
+			writeToBuff.writeInt(hauteur);
+			writeToBuff.writeInt(xCell);
+			writeToBuff.writeInt(yCell);
+			if (typeAction == 1) { // déplacement
+				writeToBuff.writeInt(hauteur_init);
+				writeToBuff.writeInt(xCell_init);
+				writeToBuff.writeInt(yCell_init);
+			}
+		}
 	}
 	
 	public static PylosPartie_actionSimple readFromNetBuffer(NetBuffer from) {

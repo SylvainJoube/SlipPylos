@@ -1,5 +1,7 @@
 package commun.partie.nonGraphique;
 
+import slip.network.buffers.NetBuffer;
+
 /**
  * 
  * Tableau de Grille de pylos : chaque grille dans la liste de PylosGrid a une hauteur donnée
@@ -198,7 +200,7 @@ public class PylosGridArray {
 		return grid.canPlaceAtPosition(xCell, yCell);
 	}
 	
-	/** N'utiliser cette fonction que depui un objet PylosPartie (dans la fonction )
+	/** N'utiliser cette fonction que depuis un objet PylosPartie (dans la fonction )
 	 *  ou depuis un objet IA. Cette fonction met juste à jour les cases, sans aucune vérification ni crédit/débit de piont à l'équipe qui joue.
 	 *  @param equipeQuiFaitAction
 	 *  @param hauteur
@@ -220,5 +222,42 @@ public class PylosGridArray {
 		PylosGrid grid = a1Grid[gridHeight];
 		return grid.getTeamAtCellPosition_noCheck(xCell, yCell);
 	}
+	
+	// Ecriture des position des pions. Il est plus rentable d'écrire l'état de toutes les cases de la partie, puutôt que case + position.
+	public void writeInBuffer(NetBuffer appendIn) {
+		appendIn.writeByte((byte) a1Grid.length); // hauteur, simplement pour vérification client - serveur
+		
+		for (int iGrid = 0; iGrid < a1Grid.length; iGrid++) {
+			PylosGrid grid = a1Grid[iGrid];
+			for (int xCell = 0; xCell < grid.gridWidth; xCell++)
+			for (int yCell = 0; yCell < grid.gridHeight; yCell++) {
+				TeamType teamAtPos = grid.a2Cell[xCell][yCell].occupeePar;
+				appendIn.writeByte((byte) teamAtPos.asInt);
+			}
+		}
+	}
+	
+
+	/** Lit les données du buffer, en partant du dernier index lu dans le buffer.
+	 * @param readFrom buffer duquel lire les données
+	 */
+	public void readFromBuffer(NetBuffer readFrom) {
+		// Vérification
+		int readGridHeight = readFrom.readByte(); // hauteur, simplement pour vérification client - serveur
+		if (readGridHeight != a1Grid.length) {
+			System.err.println("Erreur PylosGridArrayreadFromBuffer. : readGridHeight("+readGridHeight+") != a1Grid.length("+a1Grid.length+")");
+			return;
+		}
+		
+		for (int iGrid = 0; iGrid < a1Grid.length; iGrid++) {
+			PylosGrid grid = a1Grid[iGrid];
+			for (int xCell = 0; xCell < grid.gridWidth; xCell++)
+			for (int yCell = 0; yCell < grid.gridHeight; yCell++) {
+				TeamType teamAtPos = TeamType.fromInt(readFrom.readByte());
+				grid.a2Cell[xCell][yCell].occupeePar = teamAtPos; // l'objet cellule est supposé exister ici
+			}
+		}
+	}
+	
 	
 }
