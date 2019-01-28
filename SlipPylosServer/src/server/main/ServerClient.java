@@ -18,6 +18,7 @@ public class ServerClient {
 	public boolean deconnecterLeClientDesQuePossible = false;
 	public int etapeConnexion_serveur = 0; // presque même chose que RoomInternetHandler.etapeConnexion
 	public final int maxMessagesParClientEtParIteration = 5; // pour empêcher qu'un client flood le serveur
+	public String pseudoVisibleDesAutres = "";
 	
 	GestionPartie gestionPartieActuelle = null;
 	public TeamType monEquipe;
@@ -28,6 +29,8 @@ public class ServerClient {
 	private int souvenir_nbPersonnesDansListe_joueurClasses = -1;
 	private int souvenir_nbPersonnesDansListe_joueurNonClasses = -1;
 	private int souvenir_nbPersonnesDansListe_joueurIA = -1;
+	
+	private String nomDeCompte = "";
 
 	
 	
@@ -140,14 +143,14 @@ public class ServerClient {
 			client.sendMessage(envoiMessage);
 		} else {
 			deconnecterLeClientDesQuePossible = true;
-			System.err.println("ServerClient.nouveauMessage_etape0 : doit déconnecter client, verificationClientPylosStr non égal à verificationStrClient = " + verificationStrClient);
+			//System.err.println("ServerClient.nouveauMessage_etape0 : doit déconnecter client, verificationClientPylosStr non égal à verificationStrClient = " + verificationStrClient);
 		}
-		System.out.println("SERVERR : ServerClient.nouveauMessage_etape0 : deconnecterLeClientDesQuePossible = " + deconnecterLeClientDesQuePossible);
+		//System.out.println("SERVERR : ServerClient.nouveauMessage_etape0 : deconnecterLeClientDesQuePossible = " + deconnecterLeClientDesQuePossible);
 	}
 	
 
 	private void nouveauMessage_etape1(NetBuffer message) {
-		System.out.println("SERVERR : ServerClient.nouveauMessage_etape1 :");
+		//System.out.println("SERVERR : ServerClient.nouveauMessage_etape1 :");
 		String nomDeCompte = message.readString();
 		String motDePasse = message.readString();
 		
@@ -163,6 +166,7 @@ public class ServerClient {
 	private DatabaseRequest currentLoginRequest;
 	//private boolean attendConfirmationIdentifiantsDB = false;
 	private void envoyerRequeteConnexionDB(String nomDeCompte, String motDePasse) {
+		if (MainServer.utiliserDB == false) return;
 		//attendConfirmationIdentifiantsDB = true;
 		
 		// Envoi de la requête
@@ -175,7 +179,7 @@ public class ServerClient {
 	
 	private void recevoirReponseDemandeConnexionDB() {
 		
-		if (MainServer.toujoursVerifierUtilisateursAvecDB) { // si demander à la DB
+		if (MainServer.utiliserDB) { // si demander à la DB
 			if (currentLoginRequest == null) return;
 	
 			if (currentLoginRequest.isCompleted() == false) return;
@@ -194,6 +198,10 @@ public class ServerClient {
 			// 
 			Object receivedObject = currentLoginRequest.getResult();
 			DatabaseUser receivedUser = (DatabaseUser) receivedObject;
+			pseudoVisibleDesAutres = receivedUser.getUsername();
+			
+		} else {
+			pseudoVisibleDesAutres = monNomDeCompte; // si ne pas utiliser DB
 		}
 		
 		// if (pas encore recu de réponse) return;
@@ -206,6 +214,7 @@ public class ServerClient {
 		//reponseAuClient.writeBool(true); // DB ok
 		reponseAuClient.writeBool(true); // login OK
 		reponseAuClient.writeInt(EcouteClients.a1ServerClient.size());
+		reponseAuClient.writeString(pseudoVisibleDesAutres);
 		client.sendMessage(reponseAuClient);
 		
 		nombreVictoires = 1;
@@ -253,7 +262,9 @@ public class ServerClient {
 	 * 
 	 */
 	private boolean loop_etape4() {
-		if (gestionPartieActuelle == null) {
+		if (gestionPartieActuelle == null && etapeConnexion_serveur >= 4) {
+			
+			
 			etapeConnexion_serveur = 3; // écoute de ce que veut faire le client (choix d'une partie)
 			return false;
 		}
@@ -278,6 +289,18 @@ public class ServerClient {
 		
 		// Messages de partie xxx, messages avant la partie xx
 		// Si je reçois un message en xx, je déconnecte le joueur de sa partie
+		
+		if (messageType >= 10 && messageType <= 99) {
+			message.rewind();
+			etapeConnexion_serveur = 3;
+			nouveauMessage_etape3(message);
+			// Déconnexion de la partie actuelle :
+			if (gestionPartieActuelle != null) {
+				gestionPartieActuelle.testerJoueurQuittePartie(this);
+			}
+			
+			return false;
+		}
 		
 		
 		// Poser un pion de sa réserve
@@ -414,7 +437,20 @@ public class ServerClient {
 			}
 		}
 		
-		
+		// Demande de passer son tour
+		if (messageType == 113 && partieActuelle != null && gestionPartieActuelle != null) {
+			if (partieActuelle.tourDe == monEquipe) {
+				boolean reussite = partieActuelle.tourSuivant();
+				if (reussite) {
+					NetBuffer envoi = new NetBuffer();
+					envoi.writeInt(113);
+					NetBuffer variablesImportantesPartie = partieActuelle.ecrireVariablesPrincipales(); // prend donc en compte le changement de tour !
+					envoi.writeByteArray(variablesImportantesPartie.convertToByteArray());
+					gestionPartieActuelle.envoyerMessagesAuxJoueurs(envoi);
+				}
+				
+			}
+		}
 		
 		
 		
@@ -431,6 +467,20 @@ public class ServerClient {
 		}*/
 		return true;
 	}
+	
+	/** Rejoindre une partie, sans effectuer de vérication (fonction appelée par EcouteClients.loopListesRecherche() )
+	 *  @param nouvellePartie
+	 */
+	public void entrerDansPartie(GestionPartie nouvellePartie) {
+		souvenir_nbPersonnesDansListe_joueurClasses = -1;
+		souvenir_nbPersonnesDansListe_joueurNonClasses = -1;
+		souvenir_nbPersonnesDansListe_joueurIA = -1;
+		etapeConnexion_serveur = 4; // dans une partie
+		gestionPartieActuelle = nouvellePartie;
+		
+		
+	}
+	
 	
 	
 	

@@ -1,11 +1,15 @@
-package client.partie.graphique;
+package client.aMainUnit;
 
-import client.listeners.Listeners;
 import client.outils.graphiques.GraphicsHandler;
-import client.room1.Room1Handler;
-import commun.partie.nonGraphique.ModeDeJeu;
 
 public class MainUnit {
+	
+	// variables réutilisées dans client.roomInternet RoomInternetHandler.java
+	
+	public static final String internetServerIP = "localhost";//"pylos.jeanpierre.moe";//"192.168.0.23";//"pylos.jeanpierre.moe";//"192.168.0.23";// // = localhost
+	public static final int internetServerPort = 3393;
+	
+	
 	public static void main(String[] args) throws Exception {
 		System.out.println("Lancement de l'application...");
 		

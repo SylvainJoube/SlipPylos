@@ -11,6 +11,7 @@ import javax.swing.JPanel;
 import javax.swing.JPasswordField;
 import javax.swing.JTextField;
 
+import client.aMainUnit.MainUnit;
 import client.outils.graphiques.GraphicsHandler;
 import client.outils.graphiques.PImage;
 import client.partie.graphique.RessourceManager;
@@ -25,8 +26,9 @@ public class RoomInternetHandler {
 	
 	public static final RoomInternetHandler instance = new RoomInternetHandler();
 	
-	private static final String serverIP = "192.168.0.23";//"pylos.jeanpierre.moe";//"192.168.0.23";// // = localhost
-	private static final int serverPort = 3393;
+	// ip et port définis dans MainUnit.java du package aMainUnit
+	private static final String serverIP = MainUnit.internetServerIP;//"192.168.0.23";//"pylos.jeanpierre.moe";//"192.168.0.23";// // = localhost
+	private static final int serverPort = MainUnit.internetServerPort;//3393;
 	private final String verificationServeurPylosStr = "Je suis un serveur PYLOS version 1";
 	private final String verificationClientPylosStr = "Je suis un client PYLOS version 1";
 	private final String verification_clientValideStr = "client pylos validé, version 1";
@@ -262,6 +264,8 @@ public class RoomInternetHandler {
 		etapeConnexion = 5;
 	}
 	
+	public String pseudoVisibleDesAutres = "";
+	
 	/** Attente de la réponse du serveur (identifiants valides ou non)
 	 */
 	private void loop_etape5() {
@@ -275,8 +279,9 @@ public class RoomInternetHandler {
 		
 		if (succesConnexion) {
 			nombreDeClientsConnectesAuServeur = receivedMessage.readInt();
+			pseudoVisibleDesAutres = receivedMessage.readString();
 			etapeConnexion = 6;
-			afficherMessageMoche("Bienvenue, " + monNomDeCompte + " Actuellement, il y a " + nombreDeClientsConnectesAuServeur + " connecté(s) !", JOptionPane.INFORMATION_MESSAGE);
+			afficherMessageMoche("Bienvenue, " + pseudoVisibleDesAutres + ". Actuellement, il y a " + nombreDeClientsConnectesAuServeur + " connecté(s) !", JOptionPane.INFORMATION_MESSAGE);
 			
 		} else {
 			clientTCP.stop();
@@ -366,6 +371,11 @@ public class RoomInternetHandler {
 	/** Quitte la partie en cours, s'il y en avait une en cours (sans se déconnecter du serveur)
 	 */
 	private void quitterPartieEnCours_instance() {
+		// Envoi d'un nouveau message pour avertir le serveur que je quitte la partie
+		NetBuffer message = new NetBuffer();
+		message.writeInt(99);
+		clientTCP.sendMessage(message);
+		
 		
 	}
 	
@@ -374,7 +384,7 @@ public class RoomInternetHandler {
 	 */
 	private static void afficherMessageMoche(String message, int typeMessage) {
 		//String test1 = 
-		JOptionPane.showMessageDialog(null, message, "information - PylosOnline! (peut-être PylosOffline d'ailleurs...)", typeMessage);
+		JOptionPane.showMessageDialog(null, message, "Information - PylosOnline! (peut-être PylosOffline d'ailleurs...)", typeMessage);
 	}
 	
 	private RoomInternetHandler_typePartieRecherchee partieRecherchee = RoomInternetHandler_typePartieRecherchee.AUCUNE;

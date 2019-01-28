@@ -36,34 +36,6 @@ import client.roomReseauLocalAttente.RoomReseauLocalAttenteHandler;
 import commun.partie.nonGraphique.ModeDeJeu;
 import commun.partie.nonGraphique.TeamType;
 
-/* TEST !
-class AsynchronousBu implements Runnable {
-	
-	@Override
-	public void run() {
-		JPanel panel = new JPanel();
-		JLabel label = new JLabel("Enter a password:");
-		JPasswordField pass = new JPasswordField(10);
-		JPasswordField pass2 = new JPasswordField(10);
-		pass.setBounds(10, 10, 70, 200);
-		panel.add(label);
-		panel.add(pass);
-		panel.add(pass2);
-		String[] options = new String[]{"OK", "Cancel"};
-		int option = JOptionPane.showOptionDialog(null, panel, "The title",
-		                         JOptionPane.NO_OPTION, JOptionPane.PLAIN_MESSAGE,
-		                         null, options, options[0]);
-		if(option == 0) // pressing OK button
-		{
-		    char[] password = pass.getPassword();
-		    System.out.println("Your password is: " + new String(password));
-		}
-		
-		
-		String test1 = JOptionPane.showInputDialog("Please input mark for test 1: ");
-	}
-}*/
-
 /** Classe s'occupant de la fenêtre de l'application
  * D'autres classes, comme GameHandler, dessinent dans et via GraphicsHandler.
  *
@@ -71,10 +43,10 @@ class AsynchronousBu implements Runnable {
 @SuppressWarnings("serial") // cet objet ne sera de toute façon pas serialisé
 public class GraphicsHandler extends Canvas {
 	
-	/** The strategy that allows us to use accelerate page flipping */
+	/** La stratégie permettant d'avoir un double buffer (page flipping) */
 	private BufferStrategy currentBufferStrategy;
 	static public final int windowWidth = 1000;
-	static public final int windowHeight = 640;
+	static public final int windowHeight = 680;
 	
 	public AtomicBoolean gameRunning = new AtomicBoolean(true);
 	private Graphics2D currentGraphics = null;
@@ -272,7 +244,7 @@ public class GraphicsHandler extends Canvas {
 		RoomReseauLocalAttenteHandler.setVisibleFields(true);
 		RoomReseauLocalAttenteHandler.startLocalServer();
 	}
-
+	
 	public static void roomGoTo_internet() {
 		Listeners.clearEvents();
 		RoomReseauLocalAttenteHandler.setVisibleFields(false);
@@ -357,6 +329,8 @@ public class GraphicsHandler extends Canvas {
 			break;
 		case MENU_INTERNET :
 			roomNameAsString = "Jeu sur internet";
+			break;
+		default : 
 			break;
 		}
 		

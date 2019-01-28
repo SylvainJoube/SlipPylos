@@ -30,7 +30,10 @@ public class MainServerThread implements Runnable {
 			stillActive.set(false);
 			return;
 		}
-		System.out.println("MainServerThread.run : Serveur lancé, port " + serverPort +  "   hote = " + Modele.host);
+		System.out.println("MainServerThread.run : Serveur lancé, port " + serverPort);
+		System.out.println("MainServerThread.run : Utiliser la base de données =  " + MainServer.utiliserDB);
+		if (MainServer.utiliserDB)
+			System.out.println("MainServerThread.run : adresse base de données = " + Modele.host);
 		
 		EcouteClients ecouterLesClients = new EcouteClients(serveurTCP);
 		GestionDesParties gestionDesParties = new GestionDesParties();

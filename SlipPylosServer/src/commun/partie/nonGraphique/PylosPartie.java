@@ -67,6 +67,8 @@ public class PylosPartie {
 		autreJoueurTCPLocal = arg_autreJoueurTCPLocal;
 		modeServeurInternet = arg_modeServeurInternet;
 		
+		System.err.println("PylosPartie constructeur : modeServeurInternet = " + modeServeurInternet);
+		
 		tourDe = cEstLeTourDe;
 		if (tourDe != TeamType.NOIR && tourDe != TeamType.BLANC) // erreur dans l'équipe qui doit jouer
 			tourDe = TeamType.BLANC;
@@ -119,6 +121,8 @@ public class PylosPartie {
 	public boolean tourSuivant(boolean sendToLocalNetwork /* = false en valeur défaut*/) {
 		//System.out.println("PylosPartie.tourSuivant : tourDe = " + tourDe);
 		if (nbJetonsBlanc <= 0 && nbJetonsNoir <= 0) return false; // fin de la partie !
+		
+		if (modeServeurInternet == false && actionsGraphiques_listeDePionsAModifier.size() != 0) return false;
 		
 		// Je regarde 
 		/*

@@ -120,6 +120,8 @@ public class PylosPartie {
 		//System.out.println("PylosPartie.tourSuivant : tourDe = " + tourDe);
 		if (nbJetonsBlanc <= 0 && nbJetonsNoir <= 0) return false; // fin de la partie !
 		
+		if (modeServeurInternet == false && actionsGraphiques_listeDePionsAModifier.size() != 0) return false;
+		
 		// Je regarde 
 		/*
 		if (nbJetonsBlanc == 0 || nbJetonsNoir == 0) {

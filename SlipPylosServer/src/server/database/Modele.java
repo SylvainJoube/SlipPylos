@@ -11,7 +11,9 @@ import java.net.http.HttpResponse;
 import java.util.ArrayList;
 import java.net.http.HttpRequest;
 import com.google.gson.*;
-import com.google.gson.reflect.TypeToken;
+//import com.google.gson.reflect.TypeToken;
+
+import server.main.MainServer;
 
 /**
  *
@@ -23,12 +25,7 @@ public class Modele {
 	"009F07FFD80EB5B0520F7E822D8601908D85DBC9BD5C19DE84859C7FE6F15A894ED518F15871BB6FC48FFCE641B0E849A68D7CC12A90FA05966F99C34C91CE19";
 	
 
-	private final static String public_host = "https://pylos.jeanpierre.moe"; 
-	private final static String local_host = "http://localhost"; // <- Bien vérifier cete ligne ! 
-	
-	public static String host = public_host; // Modifier cette URL pour la rendre locale
-	
-	
+	public static String host = MainServer.adresseBaseDeDonnees; // Modifier cette URL pour la rendre locale ou distante sur MainServer.java package server.main
 	
 
     public static void login(DatabaseRequest request, String login, String password) {

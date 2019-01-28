@@ -57,6 +57,9 @@ public class EcouteClients {
 		while (iClient < a1ServerClient.size()) {
 			ServerClient serverClient = a1ServerClient.get(iClient);
 			if (serverClient.doitEtreDeconnecte()) {
+				// Pour toutes les parties, je regarde si le joueur y était, et je le déconnecte s'il était dedans.
+				GestionDesParties.instance.unJoueurSeDeconnecte(serverClient);
+				//System.out.println("EcouteClients.supprimerClientsADeconnecter : " + serverClient);
 				serverClient.disconnect();
 				a1ServerClient.remove(iClient);
 				
@@ -81,7 +84,7 @@ public class EcouteClients {
 			client.loop(); // boucle du client
 		}
 	}
-
+	
 	public static ArrayList<ServerClient> a1ClientRecherche_partieVsJoueurClassee = new ArrayList<ServerClient>();
 	public static ArrayList<ServerClient> a1ClientRecherche_partieVsJoueurNonClassee = new ArrayList<ServerClient>();
 	public static ArrayList<ServerClient> a1ClientRecherche_partieVsIA = new ArrayList<ServerClient>();
@@ -91,7 +94,7 @@ public class EcouteClients {
 		a1ClientRecherche_partieVsJoueurNonClassee.remove(servClient);
 		a1ClientRecherche_partieVsIA.remove(servClient);
 	}
-
+	
 	public void ajouterAListe_joueurClasse(ServerClient servClient) {
 		// + initialisation timer
 		a1ClientRecherche_partieVsJoueurClassee.add(servClient);
@@ -119,11 +122,11 @@ public class EcouteClients {
 			
 			ServerClient servClient = a1ClientRecherche_partieVsIA.get(0);
 			a1ClientRecherche_partieVsIA.remove(0);
+			if (servClient.gestionPartieActuelle != null) continue; // déjà dans une partie !
 			// S'il n'y a pas trop de parties contre une IA lancées, j'en lance une (condition à implémenter plus tard)
 			GestionPartie nouvellePartie = new GestionPartie(TypePartie.CLASSEE_VS_IA);
 			nouvellePartie.debuterPartieVsIA(servClient);
-			servClient.etapeConnexion_serveur = 4; // dans une partie
-			servClient.gestionPartieActuelle = nouvellePartie;
+			servClient.entrerDansPartie(nouvellePartie);
 			
 			
 			//iRecherche++;
@@ -131,37 +134,58 @@ public class EcouteClients {
 
 		
 		while (a1ClientRecherche_partieVsJoueurClassee.size() >= 2) {
-			// Lancer une partie avec une IA !
+			// Jouer contre un joueur, classé
 
 			ServerClient joueur1 = a1ClientRecherche_partieVsJoueurClassee.get(0);
 			ServerClient joueur2 = a1ClientRecherche_partieVsJoueurClassee.get(1);
+
+			if (joueur1.gestionPartieActuelle != null) {
+				a1ClientRecherche_partieVsJoueurClassee.remove(0);
+				continue; // déjà dans une partie !
+			}
+
+			if (joueur2.gestionPartieActuelle != null) {
+				a1ClientRecherche_partieVsJoueurClassee.remove(1);
+				continue; // déjà dans une partie !
+			}
+			
+
 			a1ClientRecherche_partieVsJoueurClassee.remove(0);
 			a1ClientRecherche_partieVsJoueurClassee.remove(0);
 			
 			GestionPartie nouvellePartie = new GestionPartie(TypePartie.CLASSEE_VS_JOUEUR);
 			nouvellePartie.debuterPartieVsJoueur_classe(joueur1, joueur2);
-			joueur1.etapeConnexion_serveur = 4; // dans une partie
-			joueur2.etapeConnexion_serveur = 4; // dans une partie
-			joueur1.gestionPartieActuelle = nouvellePartie;
-			joueur2.gestionPartieActuelle = nouvellePartie;
+			joueur1.entrerDansPartie(nouvellePartie);
+			joueur2.entrerDansPartie(nouvellePartie);
+			
+			
 			
 		}
 
 		
 		while (a1ClientRecherche_partieVsJoueurNonClassee.size() >= 2) {
-			// Lancer une partie avec une IA !
+			// Jouer contre un joueur, non classé
 
 			ServerClient joueur1 = a1ClientRecherche_partieVsJoueurNonClassee.get(0);
 			ServerClient joueur2 = a1ClientRecherche_partieVsJoueurNonClassee.get(1);
+
+			if (joueur1.gestionPartieActuelle != null) {
+				a1ClientRecherche_partieVsJoueurNonClassee.remove(0);
+				continue; // déjà dans une partie !
+			}
+
+			if (joueur2.gestionPartieActuelle != null) {
+				a1ClientRecherche_partieVsJoueurNonClassee.remove(1);
+				continue; // déjà dans une partie !
+			}
+			
 			a1ClientRecherche_partieVsJoueurNonClassee.remove(0);
 			a1ClientRecherche_partieVsJoueurNonClassee.remove(0);
 			
 			GestionPartie nouvellePartie = new GestionPartie(TypePartie.NON_CLASSEE_VS_JOUEUR);
 			nouvellePartie.debuterPartieVsJoueur_nonClasse(joueur1, joueur2);
-			joueur1.etapeConnexion_serveur = 4; // dans une partie
-			joueur2.etapeConnexion_serveur = 4; // dans une partie
-			joueur1.gestionPartieActuelle = nouvellePartie;
-			joueur2.gestionPartieActuelle = nouvellePartie;
+			joueur1.entrerDansPartie(nouvellePartie);
+			joueur2.entrerDansPartie(nouvellePartie);
 			
 		}
 		

@@ -10,6 +10,8 @@ import commun.partie.nonGraphique.PylosPartie;
 import commun.partie.nonGraphique.PylosPartieVariante;
 import commun.partie.nonGraphique.PylosPartie_actionSimple;
 import commun.partie.nonGraphique.TeamType;
+import server.database.DatabaseRequest;
+import server.database.Modele;
 import slip.network.buffers.NetBuffer;
 import slip.network.tcp.TCPClient;
 
@@ -19,6 +21,10 @@ public class GestionPartie {
 	public PylosPartie partieActuelle = null; // même PylosPartie que pour le client
 	private static Random myStaticRandom = new Random();
 	private int monID;
+	
+	public boolean doitSupprimerPartieDesQuePossible = false; // si un joueur est déconnecté par exemple
+	public boolean partieTerminee = false;
+	public int numeroGagnant = -1; // 1 pour joueur 1, 2 pour joueur 2 ou IA
 	
 	private static int globalPartieID_next = 1;
 	
@@ -31,7 +37,7 @@ public class GestionPartie {
 	
 	private ArrayList<PylosPartie_actionSimple> listeActionsSimplesEnAttenteDEnvoi = new ArrayList<PylosPartie_actionSimple>();
 	
-	private static int timerMsIA = 300;
+	private static int timerMsIA = 600; // vitesse à laquelle va jouer l'IA (temps entre chaque action)
 	
 	
 	public GestionPartie(TypePartie arg_typeDePartie) {
@@ -265,7 +271,7 @@ public class GestionPartie {
 			}
 		}
 		
-
+		
 		if (doitEnvoyerVariablesPartieDesQuePossible) {
 			doitEnvoyerVariablesPartieDesQuePossible = false;
 			NetBuffer envoi = new NetBuffer();
@@ -274,7 +280,6 @@ public class GestionPartie {
 			envoi.writeByteArray(variablesImportantesPartie.convertToByteArray());
 			envoyerMessagesAuxJoueurs(envoi);
 		}
-		
 		
 		
 	}
@@ -294,24 +299,56 @@ public class GestionPartie {
 		//	System.out.println("GestionPartie.envoyerMessagesAuxJoueurs : joueur2 == null");
 	}
 	
-	/** Récupérer qui joue, qui peut jouer, quel est ne numéro du tour actuel. (resynchronisation totale pour les clients)
-	 *  @return
+	/** Un joueur quitte la partie, la partie est alors automatiquement achevée,
+	 *  l'autre joueur (si pas vs IA) est prévenu.
+	 * @param joueur
 	 */
-	/*
-	public NetBuffer recupererVariablesPrincipalesPartie() {
-		if (partieActuelle == null) return null;
+	public void joueurQuitteCettePartie(ServerClient joueur) {
+		doitSupprimerPartieDesQuePossible = true; // toujours, une partie ne peut pas se faire sans ce joueur
 		
-		NetBuffer result = new NetBuffer();
-		result.writeInt(partieActuelle.nbJetonsBlanc);
-		result.writeInt(partieActuelle.nbJetonsNoir);
-		result.writeInt(partieActuelle.tourDe.asInt);
-		result.writeInt(partieActuelle.varianteDuJeu.asInt);
-		result.writeInt(partieActuelle.numeroDeTour);
-		result.writeBool(partieActuelle.joueurAJoueUnPion);
-		result.writeInt(partieActuelle.peutReprendrePionsNb);
-		return result;
+		if (joueur1 != null) joueur1.gestionPartieActuelle = null;
+		if (joueur2 != null) joueur2.gestionPartieActuelle = null;
 		
-	}*/
+		partieTerminee = true;
+		if (joueur == joueur1) {
+			numeroGagnant = 2; // gagnant = joueur2 ou IA
+			joueur1 = null;
+		} else {
+			numeroGagnant = 1; // gagnant = joueur1
+			joueur2 = null;
+		}
+		//System.err.println("GestionPartie.joueurQuitteCettePartie : joueur quitte ! j1 = " + joueur1 + " j2 = " + joueur2 + " decoJoueur = " + joueur);
+		// Le client joueur quitte la partie sans attendre confirmation du serveur, inutile de lui envoyer un message
+		
+		NetBuffer message = new NetBuffer();
+		message.writeInt(99);
+		envoyerMessagesAuxJoueurs(message); // s'il y en a !
+		
+		
+		// En fonction de ces résultats, ajouter des pionts au vainqueur, et en supprimer au perdant
+		// Requête DB pour incrémenter / diminuer les pionts du joueur : + tard !
+		if (MainServer.utiliserDB) {
+			//DatabaseRequest myRequest = new DatabaseRequest("on s en fiche de cette string");
+			//Modele.endGame(request, loginPlayerWhite, loginPlayerBlack, loginWinner, winnerScore, loserScore, moveList);(currentLoginRequest, nomDeCompte, motDePasse);
+		}
+	}
+	
+	/** Un joueur quitte une partie (ou se déconnecte).
+	 *  Cette fonction vérifie si le joueur déconnecté faisait partie de cette partie,
+	 *  si oui, elle le supprime et la fait se détruire aussitot que possible.
+	 *  @param joueur joueur qui quitte sa partie
+	 *  @return true si le joueur était dans cette partie, false sinon
+	 */
+	public boolean testerJoueurQuittePartie(ServerClient joueur) {
+		if (joueur == null) return false;
+		if (joueur1 == joueur || joueur2 == joueur) {
+			joueurQuitteCettePartie(joueur);
+			return true;
+		}
+		return false;
+	}
+	
+	
 	
 }
 

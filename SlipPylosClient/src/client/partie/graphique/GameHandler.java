@@ -10,6 +10,8 @@ import java.awt.image.BufferedImage;
 import java.awt.image.RescaleOp;
 import java.util.ArrayList;
 
+import javax.swing.JPanel;
+
 import client.listeners.CustomPoint;
 //import client.listeners.CustomPoint;
 import client.listeners.ListenerMouseEvent;
@@ -62,7 +64,7 @@ public class GameHandler {
 	
 	//public BoxPosition tourSuivantPos = new BoxPosition(400, 10, +138, +42);
 	public static boolean tourSuivantHighlight = false;
-	private int xTourSuivant, yTourSuivant;
+	private int xTourSuivant = 0, yTourSuivant = 0;
 	
 	public int lastMouseX = 0;
 	public int lastMouseY = 0;
@@ -110,6 +112,7 @@ public class GameHandler {
 	/** Actualiser ce que le joueur peut faire : cellule sur laquelle le joueur est, pion qu'il peut reprendre...
 	 */
 	public void refreshWithMousePosition() {
+		
 		PylosPoint mousePos = new PylosPoint(GameHandler.jeuActuel.lastMouseX,  GameHandler.jeuActuel.lastMouseY);
 		PylosPoint gridPos = new PylosPoint(GameHandler.jeuActuel.xGrid,  GameHandler.jeuActuel.yGrid);
 		
@@ -169,13 +172,86 @@ public class GameHandler {
 		
 	}
 	
+	public void dessinerInformationsTourJoueur() {
+		Graphics2D gr = GraphicsHandler.getMainGraphics();
+		Font setThisFont = new Font("TimesRoman", Font.BOLD, 26);
+		gr.setFont(setThisFont); 
+		
+		String writeString = "";
+		String writeString2 = "";
+		
+		if (partieActuelle.tourDe == partieActuelle.equipeJoueur) {
+			writeString = "C'est à vous de jouer !";
+			writeString2 = "Vous êtes la couleur " + partieActuelle.equipeJoueur.asString();
+			
+		} else {
+			writeString = "Patientez... L'autre joueur joue.";
+			writeString2 = "Vous êtes la couleur " + partieActuelle.equipeJoueur.asString();
+		}
+		
+		String writeString3 = "";
+		
+		if (partieActuelle.modeDeJeu != ModeDeJeu.HOT_SEAT && partieActuelle.pyramideRemplie()) {
+			if (partieActuelle.equipeGagnante() == partieActuelle.equipeJoueur) {
+				writeString3 = "BRAVO ! Vous avez gagné !";
+			} else {
+				writeString3 = "Oh :'( Vous avez perdu.";
+			}
+		}
+		
+
+		Color oldColor = gr.getColor();
+		gr.setColor(Color.white);
+		//g.drawString(writeString, imageCenter.x - strWidthHalf, imageCenter.y - strHeightHalf);
+		gr.drawString(writeString, 460, 200);
+		gr.drawString(writeString2, 460, 240);
+		gr.drawString(writeString3, 460, 280);
+		
+		if (partieActuelle.tourDe != partieActuelle.equipeJoueur || partieActuelle.pyramideRemplie()) {
+			int x1 = xDessinJetons;
+			int width = xTourSuivant - x1 + PImage.getImageWidth(tourSuivantImg);
+			int y1 = yDessinJetons;
+			int height = cellHeight;
+			
+			float noirAlpha = 0.6f;
+			Color colorWithAlpha = new Color(0, 0, 0, noirAlpha);
+			gr.setColor(colorWithAlpha);
+			gr.fillRect(x1, y1, width, height);
+			gr.setColor(Color.white);
+			if (partieActuelle.pyramideRemplie() == false) {
+				if (partieActuelle.tourDe != partieActuelle.equipeJoueur) {
+					gr.drawString("L'autre joueur joue...", x1 + 20, y1 + 40);
+				}
+			} else {
+				String strVictoire = "";
+				if (partieActuelle.equipeGagnante() == partieActuelle.equipeJoueur) {
+					strVictoire = "BRAVO ! Vous avez gagné !!!";
+				} else {
+					strVictoire = "Oh :'( Vous avez perdu.";
+				}
+				FontMetrics ftMetrics = gr.getFontMetrics(setThisFont);
+				int strHeight = ftMetrics.getHeight();
+				gr.drawString(strVictoire, x1 + 20, y1 + 40);
+				gr.drawString("Partie terminée !", x1 + 20, y1 + 40 + strHeight + 4);
+			}
+			
+			
+		} else {
+			gr.setColor(Color.white);
+			gr.drawString("A vous de jouer !!", xDessinJetons + 20, yDessinJetons + cellHeight + 30);
+		}
+		
+		gr.setColor(oldColor);
+		
+	}
+	
 	// Dessin du jeton avec écrit le nombre de jetons restants dessus
 	public void drawJetonNb(Graphics2D g, Image jetonImage, int nb, int x, int y, Color fontColor, boolean highlight, TeamType team) {
 		if (jetonImage == null)
 			return;
 		String nbStr;
 		nbStr = Integer.toString(nb);
-
+		
 		g.setFont(new Font("TimesRoman", Font.BOLD, 26)); 
 		
 		FontMetrics fMetrics = g.getFontMetrics();
@@ -199,51 +275,9 @@ public class GameHandler {
 			PImage.drawImageAlpha(GraphicsHandler.getMainGraphics(), jetonHighlightImg, x, y, jetonHighlightAlpha);
 		}
 		
-
-		String writeString = "";
-		String writeString2 = "";
-		
-		if (partieActuelle.tourDe == team) {
-			if (partieActuelle.equipeJoueur == team) {
-				writeString = "C'est à vous de jouer !";
-				writeString2 = "Vous êtes la couleur " + team.asString();
-			} else {
-				writeString = "";
-			}
-			
-		} else {
-			
-			if (partieActuelle.equipeJoueur == team) {
-				writeString = "Patientez... L'autre joueur joue.";
-				writeString2 = "Vous êtes la couleur " + team.asString();
-			} else {
-				writeString = "";
-			}
-			
-		}
-		
-		String writeString3 = "";
-		
-		if (team == partieActuelle.equipeJoueur && partieActuelle.modeDeJeu != ModeDeJeu.HOT_SEAT) {
-			if (partieActuelle.pyramideRemplie()) {
-				if (partieActuelle.equipeGagnante() == partieActuelle.equipeJoueur) {
-					writeString3 = "BRAVO ! Vous avez gagné !";
-				} else {
-					writeString3 = "Oh :'( Vous avez perdu.";
-				}
-				
-			}
-			
-			
-		}
-		
-		
 		Color oldColor = g.getColor();
 		g.setColor(Color.white);
 		//g.drawString(writeString, imageCenter.x - strWidthHalf, imageCenter.y - strHeightHalf);
-		g.drawString(writeString, 460, 200);
-		g.drawString(writeString2, 460, 240);
-		g.drawString(writeString3, 460, 280);
 		g.setColor(fontColor);
 		g.drawString(nbStr, imageCenter.x - strWidthHalf, imageCenter.y ); //- strHeightHalf
 		g.setColor(oldColor);
@@ -431,19 +465,26 @@ public class GameHandler {
 		
 		
 		if (goTourSuivant) {
-			PylosPartie partie = partieActuelle;
-			boolean peutChangerDeTour = true;
-			if (!partie.joueurAJoueUnPion) {
-				LogWriter.Log("MyMouseListener.mousePressed : Impossible de passer votre tour lorsque vous n'avez pas encore joué !");
-				peutChangerDeTour = false;
-			}
-			if (partieActuelle.peutReprendrePionsNb > 1) {
-				LogWriter.Log("MyMouseListener.mousePressed : Impossible de passer votre tour lorsque vous n'avez repris au moins un des pions qui vons sont dûs !");
-				peutChangerDeTour = false;
-			}
-			if (peutChangerDeTour) {
-				partie.tourSuivant();
-				if (partieActuelle.modeDeJeu == ModeDeJeu.RESEAU_LOCAL) reseauLocal_passeSonTour();
+			// si internet : envoi au serveur ! Il décide !
+			if (partieActuelle.modeDeJeu == ModeDeJeu.INTERNET) {
+				NetBuffer message = new NetBuffer();
+				message.writeInt(113);
+				RoomInternetHandler.instance.clientTCP.sendMessage(message);
+			} else {
+				PylosPartie partie = partieActuelle;
+				/*boolean peutChangerDeTour = true;
+				if (!partie.joueurAJoueUnPion) {
+					LogWriter.Log("MyMouseListener.mousePressed : Impossible de passer votre tour lorsque vous n'avez pas encore joué !");
+					peutChangerDeTour = false;
+				}
+				if (partieActuelle.peutReprendrePionsNb > 1) {
+					LogWriter.Log("MyMouseListener.mousePressed : Impossible de passer votre tour lorsque vous n'avez repris au moins un des pions qui vons sont dûs !");
+					peutChangerDeTour = false;
+				}
+				if (peutChangerDeTour) {*/
+					partie.tourSuivant();
+					if (partieActuelle.modeDeJeu == ModeDeJeu.RESEAU_LOCAL) reseauLocal_passeSonTour();
+				//}
 			}
 		}
 	}
@@ -468,13 +509,15 @@ public class GameHandler {
 		// Affichage des pions 1 à 1 pour l'IA
 		partieActuelle.actionsGraphiques_loopEffectuerAction();
 		// Pour afficher lentement les actions de l'IA
-		partieActuelle.actionsGraphiques_loopJeuIA();
+		//partieActuelle.actionsGraphiques_loopJeuIA();
 		// Dessin des pions dans la grille
 		drawPawnsOnGrid();
 		// Dessin de la future position du pion à poser
 		drawPoserPion();
 		// Dessin du bouton "tour suivant"
 		drawTourSuivant();
+		// Dessin des informations relative au tour du joueur
+		dessinerInformationsTourJoueur();
 		// Boucle si le jeu est en réseau local
 		loopReseauLocal();
 		// Boucle pour gérer les échanges avec le serveru internet
@@ -828,7 +871,8 @@ public class GameHandler {
 		for (int iMsg = 0; iMsg < 100; iMsg++) {
 			NetBuffer messageRecu = clientTCP.getNewMessage();
 			if (messageRecu == null) break;
-			internet_traiterMessage(messageRecu);
+			boolean continuerLoop = internet_traiterMessage(messageRecu);
+			if (continuerLoop == false) break;
 		}
 		
 		
@@ -850,11 +894,20 @@ public class GameHandler {
 	}
 	
 	
-	private void internet_traiterMessage(NetBuffer message) {
+	private boolean internet_traiterMessage(NetBuffer message) {
 		int messageType = message.readInt();
 		// /!\ Le client accepte sans remettre en question les données du serveur.
 		
 		System.out.println("GameHandler.internet_traiterMessage : messageType = " + messageType);
+		
+		int ancienNumeroDeTourPartie = partieActuelle.numeroDeTour;
+		
+		// Suitter la partie dans laquelle je suis actuellement
+		if (messageType == 99) {
+			// RoomInternetHandler.quitterPartieEnCours(); pas la peine !
+			GraphicsHandler.roomGoTo_internet();
+			return false; // aller à la salle internet sans manger les messages qui doivent être interceptés par la salle internet
+		}
 		
 		// Poser un pion de la réserve (réussite, pas de message en cas d'erreur !)
 		if (messageType == 110) {
@@ -875,6 +928,7 @@ public class GameHandler {
 				if (equipeQuiAJoue == TeamType.NOIR) partieActuelle.nbJetonsNoir--;
 				if (equipeQuiAJoue == TeamType.BLANC) partieActuelle.nbJetonsBlanc--;
 			}
+			
 			
 		}
 
@@ -922,8 +976,9 @@ public class GameHandler {
 			
 		}
 		
-		if (messageType == 113) { // réception du tour actuel
-			partieActuelle.tourDe = TeamType.fromInt(message.readInt());
+		if (messageType == 113) { // réception du tour actuel et variables importantes de la partie
+			NetBuffer variablesImportantesPartie = new NetBuffer(message.readByteArray());
+			partieActuelle.lireVariablesPrincipales(variablesImportantesPartie);
 			
 		}
 		
@@ -949,11 +1004,18 @@ public class GameHandler {
 		if (messageType == 120) { // resynchronisation totale de la partie
 			partieActuelle.lireTouteLaPartieDepuisBuffer(message);
 			//ss
-			GameHandler.jeuActuel.refreshWithMousePosition();
 			System.out.println("GameHandler.internet_traiterMessage : resynchronisation de la partie...");
 		}
 		
+		int nouveauNumeroDeTourPartie = partieActuelle.numeroDeTour;
+		if (ancienNumeroDeTourPartie != nouveauNumeroDeTourPartie) { // le tour a changé, réinitialisation graphique !
+			jeuActuel.volonteJoueur = VolonteJoueur.MAIN_LIBRE;
+			jeuActuel.dragCell = null;
+			
+		}
+		jeuActuel.refreshWithMousePosition();
 		
+		return true; // traiter un nouveau message, s'il y en a un
 	}
 	
 	
@@ -1032,6 +1094,33 @@ public class GameHandler {
 	public void drawImportantInfo() {
 		
 	}
+	/*
+	// Ajout de la possibilité d'envoyer un message à un autre joueur en jeu sur Internet
+	private static boolean alreadyAddedToPanel = false;
+	public static void addOnceToPanel(JPanel panel) {
+		if (alreadyAddedToPanel) return;
+		panel.add(instance.inputSalonHost);
+		panel.add(instance.inputSalonPort);
+		instance.inputSalonHost.setVisible(false);
+		instance.inputSalonPort.setVisible(false);
+		instance.alreadyAddedToPanel = true;
+		
+		Color col = new Color(236, 232, 230);
+		instance.inputSalonHost.setBackground(col);
+		//exempleTextField.setSelectedTextColor(Color.RED);
+		instance.inputSalonHost.setForeground(Color.black);
+		instance.inputSalonHost.setBorder(null);
+		instance.inputSalonHost.setFont(instance.textFieldFont);
+		//currentGraphics.setFont(); 
+		//currentGraphics.drawString(currentRoomName, xRoomName, yRoomName);
+
+		instance.inputSalonPort.setBackground(col);
+		//exempleTextField.setSelectedTextColor(Color.RED);
+		instance.inputSalonPort.setForeground(Color.black);
+		instance.inputSalonPort.setBorder(null);
+		instance.inputSalonPort.setFont(instance.textFieldFont);
+		//Font ft = exempleTextField.getFont();
+	}*/
 	
 	
 	

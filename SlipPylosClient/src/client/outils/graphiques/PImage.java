@@ -9,6 +9,13 @@ import client.listeners.Listeners;
 
 public class PImage {
 	
+	/** Dessiner une image (si elle existe) avec une valeur d'alpha
+	 * @param graphics dessiner dessus
+	 * @param image image à dessiner
+	 * @param x position en x
+	 * @param y position en y
+	 * @param alpha alpha (0 - 1)
+	 */
 	public static void drawImageAlpha(Graphics2D graphics, Image image, int x, int y, double alpha) {
 		if (graphics == null) return;
 		if (image == null) return;
@@ -19,6 +26,14 @@ public class PImage {
 		graphics.drawImage((BufferedImage) image, rop, x, y);
 	}
 	
+
+	/** Dessiner une image (si elle existe) centrée sur la postion (x, y) avec une valeur d'alpha
+	 *  @param graphics dessiner dessus
+	 *  @param image image à dessiner
+	 *  @param x position en x du centre de l'image
+	 *  @param y position en y du centre de l'image
+	 *  @param alpha alpha (0 - 1)
+	 */
 	public static void drawImageAlpha_centered(Graphics2D graphics, Image image, int x, int y, double alpha) {
 		if (graphics == null) return;
 		if (image == null) return;
@@ -29,6 +44,17 @@ public class PImage {
 		drawImageAlpha(graphics, image, newX, newY, alpha);
 	}
 	
+	/** Dessiner une image en spécifiant toutes les composantes d'alpha et de couleur.
+	 *  Pour dessiner une image en surbrillance, il suffit de mettre une valeur plus grande que 1 pour les composantes de couleur.
+	 *  @param graphics dessiner dessus
+	 *  @param image image à dessiner
+	 *  @param x position en x du centre de l'image
+	 *  @param y position en y du centre de l'image
+	 *  @param red composante en rouge
+	 *  @param green composante en vert
+	 *  @param blue composante en bleu
+	 *  @param alpha alpha (0 - 1)
+	 */
 	public static void drawImageColorAlpha(Graphics2D graphics, Image image, int x, int y, double red, double green, double blue, double alpha) {
 		if (graphics == null) return;
 		if (image == null) return;
@@ -38,6 +64,10 @@ public class PImage {
 		graphics.drawImage((BufferedImage) image, rop, x, y);
 	}
 
+	/** 
+	 *  @param image
+	 *  @return 0 si null, un int : largeur de l'image
+	 */
 	public static int getImageWidth(Image image) {
 		if (image == null) return 0;
 		try {
@@ -46,6 +76,10 @@ public class PImage {
 		return 0;
 	}
 	
+	/** 
+	 *  @param image
+	 *  @return 0 si null, un int : hauteur de l'image
+	 */
 	public static int getImageHeight(Image image) {
 		if (image == null) return 0;
 		try {
@@ -56,13 +90,13 @@ public class PImage {
 	
 	private static double checkImageAsButton_time = 0;
 	/** Dessiner une image, et la traiter comme un bouton
-	 * @param graphics
-	 * @param image
-	 * @param x
-	 * @param y
-	 * @param needMouseReleased
-	 * @param defaultPosOffset
-	 * @return
+	 *  @param graphics
+	 *  @param image
+	 *  @param x
+	 *  @param y
+	 *  @param needMouseReleased
+	 *  @param defaultPosOffset
+	 *  @return
 	 */
 	public static boolean checkImageAsButton(boolean canBeClicked, Graphics2D graphics, Image image, int x, int y, boolean needMouseReleased, int defaultPosOffset) {
 		if (image == null) return false;
