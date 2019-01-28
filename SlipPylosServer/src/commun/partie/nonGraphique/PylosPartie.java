@@ -67,8 +67,6 @@ public class PylosPartie {
 		autreJoueurTCPLocal = arg_autreJoueurTCPLocal;
 		modeServeurInternet = arg_modeServeurInternet;
 		
-		System.err.println("PylosPartie constructeur : modeServeurInternet = " + modeServeurInternet);
-		
 		tourDe = cEstLeTourDe;
 		if (tourDe != TeamType.NOIR && tourDe != TeamType.BLANC) // erreur dans l'équipe qui doit jouer
 			tourDe = TeamType.BLANC;

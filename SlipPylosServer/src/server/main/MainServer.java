@@ -13,7 +13,7 @@ public class MainServer {
 		//    tout les utilisateurs qui se connectent au serveur sont validés, quel que soit le nom de compte/mot de passe saisi
 		// -> si toujoursVerifierUtilisateursAvecDB = true,
 		//    seuls les utilisateurs enregistrés dans la base de données sont acceptés.
-		public static final boolean utiliserDB = false; // true = on a accès à la DB, false = on autorise tout le monde (toujoursVerifierUtilisateursAvecDB)
+		public static final boolean utiliserDB = true; // true = on a accès à la DB, false = on autorise tout le monde (toujoursVerifierUtilisateursAvecDB)
 		
 		// Adresses de la base de données (voir à adresseBaseDeDonnees, juste en dessous pour plus d'infos)
 		public static final String adresseBaseDeDonnees_distante = "https://pylos.jeanpierre.moe";
